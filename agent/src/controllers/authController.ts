@@ -4,7 +4,7 @@ import {
   loginUser,
   logoutUser,
   registerUser,
-} from '../services/authService';
+} from '../services/auth.service';
 import type { ApiResponse, AuthenticatedRequest, AuthResponseData } from '../types';
 
 export const register = async (

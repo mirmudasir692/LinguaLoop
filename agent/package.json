@@ -6,6 +6,10 @@
   "private": true,
   "scripts": {
     "dev": "mastra dev",
+    "dev:all": "concurrently -n \"server,client\" -c \"cyan,magenta\" \"pnpm run server:watch\" \"pnpm run client\"",
+    "client": "vite",
+    "client:build": "vite build",
+    "client:preview": "vite preview",
     "server": "tsx src/server.ts",
     "server:watch": "tsx watch src/server.ts",
     "test:auth": "tsx src/__tests__/auth.test.ts",
@@ -28,24 +32,36 @@
     "@mastra/observability": "1.17.5",
     "ai": "^7.0.93",
     "ai-sdk-ollama": "^4.2.0",
+    "axios": "^1.20.0",
     "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
+    "lucide-react": "^1.41.0",
     "mongoose": "^9.9.5",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "react-router-dom": "^7.18.3",
     "swagger-jsdoc": "^6.3.0",
     "swagger-ui-express": "^5.0.1",
     "zod": "^4.5.4"
   },
   "devDependencies": {
     "@types/bcryptjs": "^3.0.0",
+    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "latest",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
+    "@vitejs/plugin-react": "^6.1.1",
+    "concurrently": "^10.0.5",
     "mastra": "1.27.3",
     "tsx": "^4.23.13",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "vite": "^8.2.2"
   }
 }

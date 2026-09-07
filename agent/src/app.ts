@@ -1,3 +1,4 @@
+import cors from 'cors';
 import express, { Express, NextFunction, Request, Response } from 'express';
 import { setupSwagger } from './config/swagger';
 import authRoutes from './routes/authRoutes';
@@ -5,6 +6,7 @@ import authRoutes from './routes/authRoutes';
 export const createApp = (): Express => {
   const app = express();
 
+  app.use(cors());
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
 
