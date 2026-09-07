@@ -4,6 +4,7 @@ minimumReleaseAgeExclude:
   - mastra
   - "@mastra/*"
 allowBuilds:
+  '@scarf/scarf': set this to true or false
   bufferutil: true
   esbuild: true
   protobufjs: true
