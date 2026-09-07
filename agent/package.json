@@ -20,9 +20,12 @@
     "@mastra/core": "1.64.0",
     "@mastra/duckdb": "1.6.4",
     "@mastra/libsql": "1.22.3",
-    "@mastra/memory": "1.28.2",
+    "@mastra/memory": "^1.28.2",
+    "@mastra/mongodb": "^1.18.5",
     "@mastra/observability": "1.17.5",
-    "zod": "^4.4.3"
+    "ai": "^7.0.93",
+    "ai-sdk-ollama": "^4.2.0",
+    "zod": "^4.5.4"
   },
   "devDependencies": {
     "@types/node": "latest",
