@@ -1,6 +1,7 @@
 import cors from 'cors';
 import express, { Express, NextFunction, Request, Response } from 'express';
 import { setupSwagger } from './config/swagger';
+import agentRoutes from './routes/agent.routes';
 import authRoutes from './routes/authRoutes';
 
 export const createApp = (): Express => {
@@ -21,6 +22,7 @@ export const createApp = (): Express => {
   });
 
   app.use('/api/auth', authRoutes);
+  app.use('/api/agent', agentRoutes);
 
   app.use((_req: Request, res: Response) => {
     res.status(404).json({
