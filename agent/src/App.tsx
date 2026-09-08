@@ -2,7 +2,7 @@ import React from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { ProtectedRoute, PublicRoute } from './components/auth/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
-import { Dashboard, LoginPage, RegisterPage } from './pages';
+import { ChatPage, LoginPage, RegisterPage } from './pages';
 import './index.css';
 
 export const App: React.FC = () => {
@@ -27,15 +27,17 @@ export const App: React.FC = () => {
             }
           />
           <Route
-            path="/dashboard"
+            path="/chat"
             element={
               <ProtectedRoute>
-                <Dashboard />
+                <ChatPage />
               </ProtectedRoute>
             }
           />
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/dashboard" element={<Navigate to="/chat" replace />} />
+          <Route path="/settings" element={<Navigate to="/chat" replace />} />
+          <Route path="/" element={<Navigate to="/chat" replace />} />
+          <Route path="*" element={<Navigate to="/chat" replace />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
@@ -43,3 +45,5 @@ export const App: React.FC = () => {
 };
 
 export default App;
+
+

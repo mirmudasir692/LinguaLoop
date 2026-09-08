@@ -97,11 +97,9 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
           <button
             type="button"
             onClick={fillDemoCredentials}
-            className="demo-pill-btn"
-            title="Pre-fill test credentials"
+            className="btn btn-outline btn-sm"
           >
-            <span className="demo-dot" />
-            <span>Demo Autofill</span>
+            Demo Fill
           </button>
         </div>
       </CardHeader>

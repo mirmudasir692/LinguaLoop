@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Button, Card, CardContent, CardHeader, CardTitle, CardSubtitle } from '../components/ui';
 
@@ -77,8 +77,15 @@ export const Dashboard: React.FC = () => {
               </svg>
             </div>
             <span className="account-brand-title">LinguaLoop</span>
-            <span className="account-nav-divider">/</span>
-            <span className="account-nav-current">Account Settings</span>
+            
+            <nav className="account-nav-links">
+              <Link to="/chat" className="account-nav-item">
+                Chat
+              </Link>
+              <Link to="/settings" className="account-nav-item active">
+                Settings
+              </Link>
+            </nav>
           </div>
 
           <div className="account-nav-right">
