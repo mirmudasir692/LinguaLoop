@@ -6,12 +6,13 @@ import {
   SensitiveDataFilter,
 } from '@mastra/observability';
 import { agent } from './agents/agent';
-import { getMongoStore, getMongoVectorStore } from './agents/storage';
+import {  getMongoVectorStore } from './agents/storage';
+import { getCachedMongoStore } from './agents/storage/redis';
 
 export const mastra = new Mastra({
   agents: { agent },
   
-  storage: getMongoStore(),
+  storage: getCachedMongoStore(),
   
   vectors: {
     default: getMongoVectorStore(),
