@@ -3,7 +3,6 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { ProtectedRoute, PublicRoute } from './components/auth/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 import { ChatPage, LoginPage, RegisterPage } from './pages';
-import './index.css';
 
 export const App: React.FC = () => {
   return (

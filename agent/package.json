@@ -24,6 +24,8 @@
     "node": ">=22.13.0"
   },
   "dependencies": {
+    "@ai-sdk/react": "^4.0.96",
+    "@mastra/ai-sdk": "^1.10.1",
     "@mastra/core": "1.64.0",
     "@mastra/duckdb": "1.6.4",
     "@mastra/libsql": "1.22.3",
@@ -35,6 +37,7 @@
     "ai-sdk-ollama": "^4.2.0",
     "axios": "^1.20.0",
     "bcryptjs": "^3.0.3",
+    "clsx": "^2.1.1",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
@@ -47,6 +50,8 @@
     "react-router-dom": "^7.18.3",
     "swagger-jsdoc": "^6.3.0",
     "swagger-ui-express": "^5.0.1",
+    "tailwind-merge": "^3.6.0",
+    "uuid": "^14.0.2",
     "zod": "^4.5.4"
   },
   "devDependencies": {
@@ -59,9 +64,13 @@
     "@types/react-dom": "^19.2.7",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
+    "@types/uuid": "^11.0.0",
     "@vitejs/plugin-react": "^6.1.1",
+    "autoprefixer": "^10.5.5",
     "concurrently": "^10.0.5",
     "mastra": "1.27.3",
+    "postcss": "^8.5.28",
+    "tailwindcss": "^3.4.19",
     "tsx": "^4.23.13",
     "typescript": "^6.0.3",
     "vite": "^8.2.2"

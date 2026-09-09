@@ -10,5 +10,6 @@ router.get('/conversations', agentController.getConversations);
 router.get('/conversations/:conversationId/messages', agentController.getMessages);
 router.get('/messages', agentController.getMessages);
 router.get('/messages/:conversationId', agentController.getMessages);
+router.get('/suggestions', agentController.getSuggestions);
 
 export default router;

@@ -69,13 +69,16 @@
 }
 
 /* Reset & Base */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-html, body {
+html,
+body {
   min-height: 100vh;
   background-color: var(--bg-primary);
   color: var(--text-primary);
@@ -499,7 +502,8 @@ a:hover {
   cursor: wait;
 }
 
-.btn-loading-content, .btn-content {
+.btn-loading-content,
+.btn-content {
   display: inline-flex;
   align-items: center;
   justify-content: center;

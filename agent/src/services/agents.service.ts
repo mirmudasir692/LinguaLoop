@@ -52,6 +52,34 @@ export class AgentService {
 
     return result.messages;
   }
+ async chatStream(conversationId: string, userId: string, message: string) {
+    const agent = mastra.getAgent('agent');
+    if (!agent) {
+      throw new Error('Agent not found');
+    }
+
+    return agent.stream(
+      [{ role: 'user', content: message }],
+      {
+        memory: {
+          thread: conversationId,
+          resource: userId,
+        },
+      }
+    );
+  }
+  
+  async getSuggestions(): Promise<string[]> {
+    const agent = mastra.getAgent('agent');
+    if (!agent) throw new Error('Agent not found');
+    
+    const agentWithMetadata = agent as any;
+    
+    return agentWithMetadata.metadata?.suggestedPrompts || [
+      "What can you help me with?",
+      "Tell me about your capabilities."
+    ];
+  }
 }
 
 export const agentService = new AgentService();

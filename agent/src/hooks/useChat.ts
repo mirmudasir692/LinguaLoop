@@ -1,0 +1,94 @@
+// hooks/useChat.ts
+import { useState, useCallback, useEffect } from 'react';
+import chatService, { ChatMessage } from '../services/chatService';
+
+export function useChat(
+  conversationId?: string,
+  onNewConversation?: (id: string) => void   // 👈 new callback
+) {
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+const loadMessages = useCallback(async (id?: string) => {
+  setLoading(true);
+  setError(null);
+  try {
+    if (!id) {
+      setMessages([]);
+      return;
+    }
+    const msgs = await chatService.getMessages(id);
+    setMessages(msgs);
+  } catch (err: any) {
+    setError(err.message || 'Failed to load messages');
+  } finally {
+    setLoading(false);
+  }
+}, []);
+
+  useEffect(() => {
+    loadMessages(conversationId);
+  }, [conversationId, loadMessages]);
+
+  const sendMessage = useCallback(
+    async (text: string) => {
+      if (!text.trim()) return;
+      setError(null);
+
+      // Optimistic user message
+      const tempUserMsg: ChatMessage = {
+        id: `temp-${Date.now()}`,
+        role: 'user',
+        content: text,
+        createdAt: new Date().toISOString(),
+        threadId: conversationId,
+      };
+      setMessages((prev) => [...prev, tempUserMsg]);
+      setIsStreaming(true);
+
+      // Placeholder for the assistant's streaming message
+      const assistantMsgId = `assistant-${Date.now()}`;
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: assistantMsgId,
+          role: 'assistant',
+          content: '',
+          createdAt: new Date().toISOString(),
+          threadId: conversationId,
+        },
+      ]);
+
+      try {
+        await chatService.sendMessageStream(
+          text,
+          conversationId,
+          (chunk) => {
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === assistantMsgId ? { ...m, content: m.content + chunk } : m
+              )
+            );
+          },
+          (newId) => {
+            if (newId && onNewConversation) {
+              onNewConversation(newId);
+            }
+          }
+        );
+      } catch (err: any) {
+        setError(err.message || 'Failed to send message');
+        setMessages((prev) =>
+          prev.filter((m) => m.id !== tempUserMsg.id && m.id !== assistantMsgId)
+        );
+      } finally {
+        setIsStreaming(false);
+      }
+    },
+    [conversationId, onNewConversation] 
+  );
+
+  return { messages, loading, isStreaming, error, sendMessage, loadMessages };
+}
