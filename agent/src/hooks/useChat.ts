@@ -1,34 +1,42 @@
 // hooks/useChat.ts
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import chatService, { ChatMessage } from '../services/chatService';
 
 export function useChat(
   conversationId?: string,
-  onNewConversation?: (id: string) => void   // 👈 new callback
+  onNewConversation?: (id: string) => void,
+  onChatComplete?: () => void
 ) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Track new conversation ID created during an in-flight send request
+  const inFlightNewIdRef = useRef<string | null>(null);
 
-const loadMessages = useCallback(async (id?: string) => {
-  setLoading(true);
-  setError(null);
-  try {
-    if (!id) {
-      setMessages([]);
-      return;
+  const loadMessages = useCallback(async (id?: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      if (!id) {
+        setMessages([]);
+        return;
+      }
+      const msgs = await chatService.getMessages(id);
+      setMessages(msgs);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load messages');
+    } finally {
+      setLoading(false);
     }
-    const msgs = await chatService.getMessages(id);
-    setMessages(msgs);
-  } catch (err: any) {
-    setError(err.message || 'Failed to load messages');
-  } finally {
-    setLoading(false);
-  }
-}, []);
+  }, []);
 
   useEffect(() => {
+    if (conversationId && conversationId === inFlightNewIdRef.current) {
+      // Skip loading messages from backend while this newly created chat is actively streaming
+      return;
+    }
     loadMessages(conversationId);
   }, [conversationId, loadMessages]);
 
@@ -73,8 +81,9 @@ const loadMessages = useCallback(async (id?: string) => {
             );
           },
           (newId) => {
-            if (newId && onNewConversation) {
-              onNewConversation(newId);
+            if (newId) {
+              inFlightNewIdRef.current = newId;
+              onNewConversation?.(newId);
             }
           }
         );
@@ -85,9 +94,11 @@ const loadMessages = useCallback(async (id?: string) => {
         );
       } finally {
         setIsStreaming(false);
+        inFlightNewIdRef.current = null;
+        onChatComplete?.();
       }
     },
-    [conversationId, onNewConversation] 
+    [conversationId, onNewConversation, onChatComplete]
   );
 
   return { messages, loading, isStreaming, error, sendMessage, loadMessages };

@@ -61,7 +61,10 @@ export function MessageBubble({ message, isStreaming }: MessageBubbleProps) {
 
             {/* 3. Main Message Content */}
             <div className="whitespace-pre-wrap">
-              {mainContent || (isStreaming ? <span className="inline-block w-2 h-4 bg-gray-800 animate-pulse rounded-sm"></span> : '')}
+              {mainContent}
+              {isStreaming && (
+                <span className="inline-block w-1.5 h-4 ml-1 bg-gray-600 animate-pulse rounded-sm align-middle" />
+              )}
             </div>
           </>
         )}

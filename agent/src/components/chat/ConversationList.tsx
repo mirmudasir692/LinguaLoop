@@ -1,5 +1,4 @@
 // components/chat/ConversationList.tsx
-import { useConversations } from '../../hooks/useConversations';
 import { useChatContext } from '../../context/ChatContext';
 
 interface ConversationListProps {
@@ -7,8 +6,13 @@ interface ConversationListProps {
 }
 
 export function ConversationList({ onNewChat }: ConversationListProps) {
-  const { conversations, loading, error } = useConversations();
-  const { currentConversation, setCurrentConversation } = useChatContext();
+  const {
+    conversations,
+    loadingConversations: loading,
+    errorConversations: error,
+    currentConversation,
+    setCurrentConversation,
+  } = useChatContext();
 
   return (
     <div className="w-64 border-r p-4 flex flex-col h-full">
