@@ -1,0 +1,77 @@
+# Architecture & Data Flow
+
+Here is the exact flow of data to achieve that low-latency "phone call" feel:
+
+```
+[ React Frontend ] <== (WebSocket) ==> [ Express.js Backend ] <== (API) ==> [ External AI Services ]
+      (Mic/Speaker)                           (The Traffic Cop)                    (STT / TTS)
+                                                     |
+                                                     v
+                                               [ Mastra ]
+                                             (The AI Brain)
+```
+
+---
+
+## Step-by-Step Data Flow
+
+1. **Audio In (React → Express):**  
+   React captures the microphone audio using the Web Audio API and streams raw PCM audio chunks (16kHz) to Express via a WebSocket.
+
+2. **Speech-to-Text (Express → STT API):**  
+   Express immediately pipes these audio chunks to a streaming STT provider (Industry standard: **Deepgram**). Deepgram sends back partial and final text transcripts in real-time.
+
+3. **The Brain (Express → Mastra):**  
+   Once Deepgram detects the user has stopped speaking (End of Utterance), Express sends the final text to **Mastra**. Mastra processes the text, checks its memory/history, and streams the LLM's text response back to Express token-by-token.
+
+4. **Text-to-Speech (Express → TTS API):**  
+   As Express receives the streaming text from Mastra, it buffers it into short sentences and sends them to a TTS provider (Industry standard: **ElevenLabs** or **OpenAI TTS**).
+
+5. **Audio Out (TTS API → Express → React):**  
+   The TTS API returns audio chunks. Express immediately streams these audio chunks back through the WebSocket to React, which plays them out of the speakers.
+
+---
+
+## Why this is the Industry Standard?
+
+- **Separation of Concerns:** Mastra is designed to manage state, tools, and LLM routing. It is not designed to manage WebRTC jitter or audio buffers. Express handles the messy WebSocket plumbing, keeping your Mastra agent code clean.
+- **Streaming is Mandatory:** By piping Mastra's streaming text directly into the TTS API sentence-by-sentence, you achieve sub-500ms latency. If you wait for Mastra to finish the whole paragraph before sending it to TTS, the delay will be 3+ seconds, ruining the "phone call" illusion.
+- **Scalability:** If you want to add a new feature later (like translating the audio to Spanish), you just add a new step in the Express pipeline without touching your Mastra agent logic.
+
+---
+
+## How to Handle the "Phone Call" Feel (Crucial)
+
+To make it feel like a real phone call, you must implement **Barge-In (Interruption Handling)**. If the AI is talking and the user interrupts, the AI must stop instantly.
+
+### Implementation:
+
+- **Frontend (React):** Use a lightweight Voice Activity Detection (VAD) library like `@ricky0123/vad-web`. It listens to the microphone locally in the browser.
+- **The Interrupt Signal:** If the VAD detects the user speaking while the AI's audio is playing in the speakers, React immediately sends a `{ type: "INTERRUPT" }` message via WebSocket to Express.
+- **Backend (Express):** When Express receives the `INTERRUPT` signal, it must:
+  1. Immediately abort the current Mastra stream.
+  2. Clear the TTS audio queue.
+  3. Stop sending audio to React.
+  4. Start processing the new audio stream from the user.
+
+---
+
+## Recommended Tech Stack for this Architecture
+
+| Component | Recommended Package / Service | Why it's the Industry Standard |
+| :--- | :--- | :--- |
+| **Real-time Comms** | `ws` or `socket.io` (Node.js) | `ws` is faster and lighter for raw binary audio streaming. |
+| **STT (Speech-to-Text)** | Deepgram (via Node SDK) | Unbeatable latency and accuracy for streaming English audio. |
+| **TTS (Text-to-Speech)** | ElevenLabs (WebSocket API) or OpenAI TTS | ElevenLabs sounds the most human; OpenAI is slightly faster. Both support streaming. |
+| **Frontend VAD** | `@ricky0123/vad-web` | Runs locally in the browser to detect when the user starts/stops speaking without sending audio to the server. |
+| **AI Brain** | Mastra | Handles the LLM streaming, conversation memory, and agent logic. |
+
+---
+
+## Summary of Next Steps
+
+1. Set up the WebSocket server in Express to accept binary audio from React.
+2. Connect Deepgram to that WebSocket to transcribe the audio.
+3. Pass the transcribed text to Mastra, ensuring you use Mastra's streaming capabilities.
+4. Pipe Mastra's text stream into ElevenLabs/OpenAI to get audio chunks back.
+5. Send the audio chunks back through the WebSocket to React to play.
