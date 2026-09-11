@@ -1,109 +1,85 @@
 import { WebSocket, WebSocketServer } from 'ws';
-import { Server as HTTPServer } from 'http';
+import { Server as HTTPServer, IncomingMessage } from 'http';
 import { voiceService } from '../services/voice.service';
-import { redisService } from '../services/redis.service';
-import {
-    parseVoiceParams,
-    VoiceSessionStore,
-    AudioStreamQueue,
-    sendAudio,
-    parseTextMessage,
-} from '../utils/voiceUtils';
+import { parseVoiceParams, parseTextMessage } from '../utils/voiceUtils';
 
-const activeSessions = new VoiceSessionStore();
+export class VoiceConnectionHandler {
+    private readonly conversationId: string;
+    private readonly userId: string;
+    private readonly voiceId?: string;
 
-export function initializeVoiceWebSocket(httpServer: HTTPServer) {
+    constructor(
+        private readonly ws: WebSocket,
+        req: IncomingMessage
+    ) {
+        const params = parseVoiceParams(req);
+        this.conversationId = params.conversationId;
+        this.userId = params.userId;
+
+        this.init();
+    }
+
+    private init(): void {
+        console.log(`[VoiceConnection] Connection opened for conversation: ${this.conversationId}`);
+        voiceService.startSession(this.conversationId, this.userId);
+
+        this.ws.on('message', (data: Buffer | string) => this.onMessage(data));
+        this.ws.on('close', () => this.onClose());
+        this.ws.on('error', (err) => this.onError(err));
+    }
+
+    private onMessage(data: Buffer | string): void {
+        voiceService.touchActivity(this.conversationId);
+
+        const payload = parseTextMessage(data);
+        console.log(`[VoiceConnection] Received message for ${this.conversationId}:`, payload);
+        if (!payload) return;
+
+        if (payload.type === 'INTERRUPT') {
+            console.log(`[VoiceConnection] Interrupt received for conversation: ${this.conversationId}`);
+            voiceService.handleInterrupt(this.conversationId);
+            return;
+        }
+
+        const sentence = typeof payload === 'string' ? payload : (payload.text || payload.sentence);
+        if (typeof sentence === 'string' && sentence.trim()) {
+            voiceService.processSentence(
+                this.conversationId,
+                this.userId,
+                sentence.trim(),
+                (aiSentence) => this.sendAiSentence(aiSentence),
+            ).catch(err => {
+                console.error(`[VoiceConnection] Failed to process sentence:`, err);
+            });
+        }
+    }
+
+    private sendAiSentence(sentence: string): void {
+        if (this.ws.readyState === WebSocket.OPEN) {
+            console.log(`[VoiceConnection] Sending AI sentence to client: "${sentence}"`);
+            this.ws.send(JSON.stringify({ type: 'AI_SPEECH', text: sentence }));
+        }
+    }
+
+    private onClose(): void {
+        console.log(`[VoiceConnection] Connection closed for conversation: ${this.conversationId}`);
+        voiceService.endSession(this.conversationId);
+        this.ws.removeAllListeners();
+    }
+
+    private onError(error: Error): void {
+        console.error(`[VoiceConnection] WebSocket error for conversation ${this.conversationId}:`, error);
+        voiceService.endSession(this.conversationId);
+        this.ws.removeAllListeners();
+    }
+}
+
+export function initializeVoiceWebSocket(httpServer: HTTPServer): void {
     const wss = new WebSocketServer({ server: httpServer, path: '/audio-stream' });
 
-    wss.on('connection', (ws: WebSocket, req) => {
-        console.log('🎙️ New voice connection established');
-
-        const { conversationId, userId, voiceId } = parseVoiceParams(req);
-        let isInterrupted = false;
-        let receivedChunkCount = 0;
-
-        redisService.saveVoiceSession({
-            conversationId,
-            userId,
-            status: 'connected',
-            createdAt: new Date().toISOString(),
-            lastActiveAt: new Date().toISOString(),
-        }).catch(err => console.error('Failed to store session in Redis:', err));
-
-        const cleanup = () => {
-            isInterrupted = true;
-            activeSessions.remove(conversationId);
-            redisService.deleteVoiceSession(conversationId)
-                .catch(err => console.error('Failed to remove session from Redis:', err));
-            ws.removeAllListeners();
-        };
-
-        ws.on('message', async (message: Buffer, isBinary: boolean) => {
-            try {
-                if (!isBinary) {
-                    const payload = parseTextMessage(message);
-                    if (payload?.type === 'INTERRUPT') {
-                        console.log(`🛑 INTERRUPT received for session: ${conversationId}`);
-                        isInterrupted = true;
-                        redisService.updateVoiceSessionStatus(conversationId, 'interrupted')
-                            .catch(err => console.error('Failed to update session status in Redis:', err));
-                        activeSessions.abort(conversationId);
-                    }
-                    return;
-                }
-
-                if (isInterrupted) return;
-
-                receivedChunkCount++;
-                console.log(`🎙️ [Voice WebSocket] Received audio chunk #${receivedChunkCount} (${message.length} bytes) for conversation: ${conversationId}`);
-
-                redisService.updateVoiceSessionActivity(conversationId)
-                    .catch(err => console.error('Failed to update activity in Redis:', err));
-
-                let session = activeSessions.get(conversationId);
-
-                if (!session) {
-                    const controller = new AbortController();
-                    const audioStream = new AudioStreamQueue();
-
-                    session = {
-                        stream: audioStream,
-                        abort: () => controller.abort(),
-                    };
-                    activeSessions.register(conversationId, session);
-
-                    redisService.updateVoiceSessionStatus(conversationId, 'streaming')
-                        .catch(err => console.error('Failed to set streaming status in Redis:', err));
-
-                    voiceService.processVoiceStream(
-                        conversationId,
-                        userId,
-                        audioStream,
-                        (audioBuffer) => sendAudio(ws, audioBuffer, isInterrupted),
-                        () => isInterrupted,
-                        voiceId
-                    ).catch(err => {
-                        console.error('Pipeline failed:', err);
-                        cleanup();
-                    });
-                }
-
-                session.stream.push(message);
-            } catch (error) {
-                console.error('WebSocket message error:', error);
-            }
-        });
-
-        ws.on('close', () => {
-            console.log(`🔌 Voice connection closed: ${conversationId}`);
-            cleanup();
-        });
-
-        ws.on('error', (error) => {
-            console.error(`WebSocket error for ${conversationId}:`, error);
-            cleanup();
-        });
+    wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
+        new VoiceConnectionHandler(ws, req);
     });
 
-    console.log('✅ Voice WebSocket server initialized at ws://localhost:3001/audio-stream');
+    console.log('[VoiceWebSocket] Server initialized on path /audio-stream');
 }

@@ -1,4 +1,6 @@
 import React from 'react';
+export { VoiceTutor } from './VoiceTutor';
+export type { VoiceTutorProps } from './VoiceTutor';
 
 export interface Voice {
     id: string;
@@ -17,6 +19,11 @@ interface VoiceChatUIProps {
     availableVoices?: Voice[];
     selectedVoiceId?: string;
     onSelectVoiceId?: (voiceId: string) => void;
+    voiceError?: string | null;
+    userTranscript?: string;
+    aiTranscript?: string;
+    onRetryListening?: () => void;
+    onClearError?: () => void;
 }
 
 export function VoiceChatUI({
@@ -27,7 +34,12 @@ export function VoiceChatUI({
     onEndCall,
     availableVoices = [],
     selectedVoiceId = '',
-    onSelectVoiceId
+    onSelectVoiceId,
+    voiceError,
+    userTranscript,
+    aiTranscript,
+    onRetryListening,
+    onClearError,
 }: VoiceChatUIProps) {
     return (
         <div className="flex flex-col items-center justify-center p-6 space-y-4 bg-gradient-to-b from-blue-50/50 to-white rounded-2xl shadow-sm border border-blue-100 max-w-md mx-auto w-full transition-all">
@@ -42,6 +54,38 @@ export function VoiceChatUI({
                     </span>
                 </div>
             </div>
+
+            {voiceError && (
+                <div className="w-full bg-amber-50 border border-amber-200 rounded-xl p-3 text-left space-y-2 text-xs text-amber-900 shadow-xs">
+                    <div className="flex items-center gap-1.5 font-bold text-amber-800">
+                        <span>⚠️</span>
+                        <span>Speech Recognition Notice</span>
+                    </div>
+                    <p className="whitespace-pre-line leading-relaxed text-amber-800 font-sans">
+                        {voiceError}
+                    </p>
+                    <div className="flex items-center gap-2 pt-1">
+                        {onRetryListening && (
+                            <button
+                                type="button"
+                                onClick={onRetryListening}
+                                className="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-lg text-xs transition-colors cursor-pointer"
+                            >
+                                Retry Listening
+                            </button>
+                        )}
+                        {onClearError && (
+                            <button
+                                type="button"
+                                onClick={onClearError}
+                                className="px-3 py-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded-lg text-xs transition-colors cursor-pointer"
+                            >
+                                Dismiss
+                            </button>
+                        )}
+                    </div>
+                </div>
+            )}
 
             {availableVoices.length > 0 && (
                 <div className="flex items-center space-x-2 w-full justify-between bg-white/80 p-2 rounded-lg border border-gray-100">
@@ -61,7 +105,7 @@ export function VoiceChatUI({
                 </div>
             )}
 
-            <div className="h-10 flex items-center justify-center">
+            <div className="min-h-10 flex flex-col items-center justify-center w-full space-y-1">
                 {isAiSpeaking ? (
                     <div className="flex items-center justify-center space-x-1.5 h-8">
                         <div className="w-1.5 h-4 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
@@ -72,12 +116,23 @@ export function VoiceChatUI({
                     </div>
                 ) : isCallActive ? (
                     <span className="text-xs font-medium text-blue-600 animate-pulse">
-                        Listening... Speak anytime to interrupt
+                        Listening... Speak anytime to chat
                     </span>
                 ) : (
                     <span className="text-xs text-gray-400">
                         Click "Start Call" to begin live voice conversation
                     </span>
+                )}
+
+                {userTranscript && isCallActive && (
+                    <div className="text-xs bg-blue-50 text-blue-800 px-3 py-1 rounded-lg w-full text-center border border-blue-100 truncate">
+                        <span className="font-semibold">You:</span> "{userTranscript}"
+                    </div>
+                )}
+                {aiTranscript && isCallActive && (
+                    <div className="text-xs bg-indigo-50 text-indigo-800 px-3 py-1 rounded-lg w-full text-center border border-indigo-100 truncate">
+                        <span className="font-semibold">AI:</span> "{aiTranscript}"
+                    </div>
                 )}
             </div>
 
@@ -86,7 +141,7 @@ export function VoiceChatUI({
                     <button
                         onClick={onStartCall}
                         disabled={!isConnected}
-                        className="flex items-center space-x-2 px-6 py-2.5 bg-blue-600 text-white font-semibold text-sm rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-700 active:scale-95 transition-all shadow-md shadow-blue-500/20"
+                        className="flex items-center space-x-2 px-6 py-2.5 bg-blue-600 text-white font-semibold text-sm rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-700 active:scale-95 transition-all shadow-md shadow-blue-500/20 cursor-pointer"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                             <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
@@ -96,7 +151,7 @@ export function VoiceChatUI({
                 ) : (
                     <button
                         onClick={onEndCall}
-                        className="flex items-center space-x-2 px-6 py-2.5 bg-red-600 text-white font-semibold text-sm rounded-xl hover:bg-red-700 active:scale-95 transition-all shadow-md shadow-red-500/20"
+                        className="flex items-center space-x-2 px-6 py-2.5 bg-red-600 text-white font-semibold text-sm rounded-xl hover:bg-red-700 active:scale-95 transition-all shadow-md shadow-red-500/20 cursor-pointer"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z" clipRule="evenodd" />

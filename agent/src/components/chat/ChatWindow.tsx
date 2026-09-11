@@ -5,10 +5,12 @@ import { useChatContext } from '../../context/ChatContext';
 import { MessageBubble } from './MessageBubble';
 import { useVoiceChat } from '../../hooks/useVoiceChat';
 import { VoiceChatUI } from '../VoiceChatUI';
+import { useAuth } from '../../context/useAuth';
 import { Phone, PhoneOff, Mic, Send } from 'lucide-react';
 
 export function ChatWindow() {
   const { currentConversation, setCurrentConversation, refetchConversations } = useChatContext();
+  const { user } = useAuth();
   const { messages, loading, isStreaming, error, sendMessage } = useChat(
     currentConversation?.id,
     (newId: string) => {
@@ -30,10 +32,16 @@ export function ChatWindow() {
     availableVoices,
     selectedVoiceId,
     setSelectedVoiceId,
+    voiceError,
+    userTranscript,
+    aiTranscript,
     startCall,
     endCall,
+    retryListening,
+    clearVoiceError,
   } = useVoiceChat('ws://localhost:5000/audio-stream', {
     conversationId: currentConversation?.id,
+    userId: user?._id,
   });
 
   const [showVoicePanel, setShowVoicePanel] = useState(false);
@@ -129,6 +137,11 @@ export function ChatWindow() {
             availableVoices={availableVoices}
             selectedVoiceId={selectedVoiceId}
             onSelectVoiceId={setSelectedVoiceId}
+            voiceError={voiceError}
+            userTranscript={userTranscript}
+            aiTranscript={aiTranscript}
+            onRetryListening={retryListening}
+            onClearError={clearVoiceError}
           />
         </div>
       )}

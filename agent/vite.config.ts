@@ -3,9 +3,6 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
   plugins: [react()],
-  optimizeDeps: {
-    include: ['@ricky0123/vad-web'],
-  },
   server: {
     port: 3000,
     headers: {

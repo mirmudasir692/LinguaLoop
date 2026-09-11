@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { Mastra } from '@mastra/core/mastra';
 import {
   MastraStorageExporter,
