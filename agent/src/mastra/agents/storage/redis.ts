@@ -1,7 +1,7 @@
-import Redis from 'ioredis';
+import { redisService } from '../../../services/redis.service';
 import { getMongoStore } from '.';
 
-const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
+const redis = redisService.getClient();
 
 const CACHE_TTL = 3600;
 
@@ -13,7 +13,7 @@ export function getCachedMongoStore() {
       const originalMethod = Reflect.get(target, prop, receiver);
       if (typeof originalMethod !== 'function') return originalMethod;
 
-      
+
       if (prop === 'getThread') {
         return async (threadId: string) => {
           const cacheKey = `mastra:thread:${threadId}`;
@@ -56,9 +56,9 @@ export function getCachedMongoStore() {
         };
       }
 
-      
+
       const writeMethods = [
-        'saveThread', 'updateThread', 'deleteThread', 
+        'saveThread', 'updateThread', 'deleteThread',
         'saveMessages', 'deleteMessages',
         'getWorkingMemory', 'saveWorkingMemory'
       ];
@@ -66,12 +66,12 @@ export function getCachedMongoStore() {
       if (writeMethods.includes(prop)) {
         return async (...args: any[]) => {
           const result = await originalMethod.apply(target, args);
-          
-          let threadId = 
-            args[0]?.threadId || 
-            args[0]?.id || 
-            args[0]?.[0]?.threadId || 
-            args[0]?.resourceId;    
+
+          let threadId =
+            args[0]?.threadId ||
+            args[0]?.id ||
+            args[0]?.[0]?.threadId ||
+            args[0]?.resourceId;
 
           if (threadId) {
             await redis.del(`mastra:thread:${threadId}`);
@@ -80,7 +80,7 @@ export function getCachedMongoStore() {
           }
 
           if (args[0]?.resourceId) {
-             await redis.del(`mastra:threads:resource:${args[0].resourceId}`);
+            await redis.del(`mastra:threads:resource:${args[0].resourceId}`);
           }
 
           return result;

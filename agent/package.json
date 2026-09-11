@@ -7,8 +7,9 @@
   "scripts": {
     "dev": "mastra dev",
     "dev:all": "concurrently -n \"server,client\" -c \"cyan,magenta\" \"pnpm run server:watch\" \"pnpm run client\"",
-    "client": "vite",
-    "client:build": "vite build",
+    "copy-vad-assets": "mkdir -p public && cp node_modules/.pnpm/onnxruntime-web@*/node_modules/onnxruntime-web/dist/ort-wasm* public/ 2>/dev/null || cp node_modules/onnxruntime-web/dist/ort-wasm* public/ 2>/dev/null || true && cp node_modules/.pnpm/@ricky0123+vad-web@*/node_modules/@ricky0123/vad-web/dist/silero_vad* public/ 2>/dev/null || true && cp node_modules/.pnpm/@ricky0123+vad-web@*/node_modules/@ricky0123/vad-web/dist/vad.worklet* public/ 2>/dev/null || true",
+    "client": "pnpm run copy-vad-assets && vite",
+    "client:build": "pnpm run copy-vad-assets && vite build",
     "client:preview": "vite preview",
     "server": "tsx src/server.ts",
     "server:watch": "tsx watch src/server.ts",
@@ -33,6 +34,7 @@
     "@mastra/mongodb": "^1.18.5",
     "@mastra/observability": "1.17.5",
     "@mastra/react": "^1.4.10",
+    "@ricky0123/vad-web": "^0.0.30",
     "ai": "^7.0.93",
     "ai-sdk-ollama": "^4.2.0",
     "axios": "^1.20.0",
@@ -45,6 +47,7 @@
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^1.41.0",
     "mongoose": "^9.9.5",
+    "onnxruntime-web": "1.17.3",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.3",
@@ -52,6 +55,7 @@
     "swagger-ui-express": "^5.0.1",
     "tailwind-merge": "^3.6.0",
     "uuid": "^14.0.2",
+    "ws": "^8.21.3",
     "zod": "^4.5.4"
   },
   "devDependencies": {
@@ -65,6 +69,7 @@
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
     "@types/uuid": "^11.0.0",
+    "@types/ws": "^8.18.1",
     "@vitejs/plugin-react": "^6.1.1",
     "autoprefixer": "^10.5.5",
     "concurrently": "^10.0.5",
@@ -74,5 +79,10 @@
     "tsx": "^4.23.13",
     "typescript": "^6.0.3",
     "vite": "^8.2.2"
+  },
+  "pnpm": {
+    "overrides": {
+      "onnxruntime-web": "1.17.3"
+    }
   }
 }

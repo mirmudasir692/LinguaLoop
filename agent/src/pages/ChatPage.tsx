@@ -1,4 +1,3 @@
-// pages/ChatPage.tsx
 import { ChatWindow } from '../components/chat/ChatWindow';
 import { ConversationList } from '../components/chat/ConversationList';
 import { ChatProvider, useChatContext } from '../context/ChatContext';
@@ -7,7 +6,7 @@ function ChatPageContent() {
   const { setCurrentConversation } = useChatContext();
 
   const startNewChat = () => {
-    setCurrentConversation(null); // clears the conversation → ChatWindow will show empty state
+    setCurrentConversation(null);
   };
 
   return (

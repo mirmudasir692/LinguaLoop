@@ -4,6 +4,8 @@ import express, { Express, NextFunction, Request, Response } from 'express';
 import { setupSwagger } from './config/swagger';
 import agentRoutes from './routes/agent.routes';
 import authRoutes from './routes/authRoutes';
+import http from 'http';
+import { initializeVoiceWebSocket } from './controllers/voice.controller';
 
 export const createApp = (): Express => {
   const app = express();
@@ -47,4 +49,24 @@ export const createApp = (): Express => {
 };
 
 export const app = createApp();
+const server = http.createServer(app);
+initializeVoiceWebSocket(server);
+const PORT = process.env.PORT || 3000;
+
+server.listen(PORT, () => {
+  console.log(`🚀 HTTP Server running on http://localhost:${PORT}`);
+  console.log(`📖 Swagger UI available at http://localhost:${PORT}/api-docs`);
+  console.log(`🎙️ Voice WebSocket ready at ws://localhost:${PORT}/audio-stream`);
+});
+
+const gracefulShutdown = (signal: string) => {
+  console.log(`${signal} received. Shutting down gracefully...`);
+  server.close(() => {
+    console.log('HTTP server closed.');
+    process.exit(0);
+  });
+};
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
 export default app;
