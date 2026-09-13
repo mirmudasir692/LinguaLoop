@@ -32,25 +32,46 @@ export class VoiceConnectionHandler {
         voiceService.touchActivity(this.conversationId);
 
         const payload = parseTextMessage(data);
-        console.log(`[VoiceConnection] Received message for ${this.conversationId}:`, payload);
         if (!payload) return;
 
         if (payload.type === 'INTERRUPT') {
-            console.log(`[VoiceConnection] Interrupt received for conversation: ${this.conversationId}`);
             voiceService.handleInterrupt(this.conversationId);
+            this.sendTurnComplete();
             return;
         }
 
         const sentence = typeof payload === 'string' ? payload : (payload.text || payload.sentence);
         if (typeof sentence === 'string' && sentence.trim()) {
+            this.sendProcessingStart();
             voiceService.processSentence(
                 this.conversationId,
                 this.userId,
                 sentence.trim(),
-                (aiSentence) => this.sendAiSentence(aiSentence),
+                (audioBuffer) => this.sendAiAudio(audioBuffer),
+                () => this.sendTurnComplete(),
             ).catch(err => {
-                console.error(`[VoiceConnection] Failed to process sentence:`, err);
+                console.error(err);
+                this.sendTurnComplete();
             });
+        }
+    }
+    private sendAiAudio(audio: Buffer): void {
+        if (this.ws.readyState === WebSocket.OPEN) {
+            this.ws.send(audio);
+        }
+    }
+
+    private sendProcessingStart(): void {
+        if (this.ws.readyState === WebSocket.OPEN) {
+            console.log(`[VoiceConnection] Sending AI_PROCESSING_START to client for conversation: ${this.conversationId}`);
+            this.ws.send(JSON.stringify({ type: 'AI_PROCESSING_START' }));
+        }
+    }
+
+    private sendTurnComplete(): void {
+        if (this.ws.readyState === WebSocket.OPEN) {
+            console.log(`[VoiceConnection] Sending AI_TURN_COMPLETE to client for conversation: ${this.conversationId}`);
+            this.ws.send(JSON.stringify({ type: 'AI_TURN_COMPLETE' }));
         }
     }
 

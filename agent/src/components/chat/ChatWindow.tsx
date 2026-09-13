@@ -29,6 +29,8 @@ export function ChatWindow() {
     isConnected,
     isCallActive,
     isAiSpeaking,
+    isProcessing,
+    isMicMuted,
     availableVoices,
     selectedVoiceId,
     setSelectedVoiceId,
@@ -37,6 +39,7 @@ export function ChatWindow() {
     aiTranscript,
     startCall,
     endCall,
+    interrupt,
     retryListening,
     clearVoiceError,
   } = useVoiceChat('ws://localhost:5000/audio-stream', {
@@ -129,6 +132,8 @@ export function ChatWindow() {
             isConnected={isConnected}
             isCallActive={isCallActive}
             isAiSpeaking={isAiSpeaking}
+            isProcessing={isProcessing}
+            isMicMuted={isMicMuted}
             onStartCall={startCall}
             onEndCall={() => {
               endCall();
@@ -142,6 +147,7 @@ export function ChatWindow() {
             aiTranscript={aiTranscript}
             onRetryListening={retryListening}
             onClearError={clearVoiceError}
+            onInterrupt={interrupt}
           />
         </div>
       )}

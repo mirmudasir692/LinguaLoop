@@ -14,6 +14,8 @@ interface VoiceChatUIProps {
     isConnected: boolean;
     isCallActive: boolean;
     isAiSpeaking: boolean;
+    isProcessing?: boolean;
+    isMicMuted?: boolean;
     onStartCall: () => void;
     onEndCall: () => void;
     availableVoices?: Voice[];
@@ -24,12 +26,15 @@ interface VoiceChatUIProps {
     aiTranscript?: string;
     onRetryListening?: () => void;
     onClearError?: () => void;
+    onInterrupt?: () => void;
 }
 
 export function VoiceChatUI({
     isConnected,
     isCallActive,
     isAiSpeaking,
+    isProcessing = false,
+    isMicMuted,
     onStartCall,
     onEndCall,
     availableVoices = [],
@@ -40,6 +45,7 @@ export function VoiceChatUI({
     aiTranscript,
     onRetryListening,
     onClearError,
+    onInterrupt,
 }: VoiceChatUIProps) {
     return (
         <div className="flex flex-col items-center justify-center p-6 space-y-4 bg-gradient-to-b from-blue-50/50 to-white rounded-2xl shadow-sm border border-blue-100 max-w-md mx-auto w-full transition-all">
@@ -105,19 +111,52 @@ export function VoiceChatUI({
                 </div>
             )}
 
-            <div className="min-h-10 flex flex-col items-center justify-center w-full space-y-1">
+            <div className="min-h-12 flex flex-col items-center justify-center w-full space-y-2">
                 {isAiSpeaking ? (
-                    <div className="flex items-center justify-center space-x-1.5 h-8">
-                        <div className="w-1.5 h-4 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                        <div className="w-1.5 h-7 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                        <div className="w-1.5 h-3 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                        <div className="w-1.5 h-6 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '450ms' }} />
-                        <div className="w-1.5 h-4 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '600ms' }} />
+                    <div className="flex flex-col items-center justify-center space-y-1">
+                        <div className="flex items-center justify-center space-x-1.5 h-6">
+                            <div className="w-1.5 h-3 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                            <div className="w-1.5 h-6 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                            <div className="w-1.5 h-3 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                            <div className="w-1.5 h-5 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '450ms' }} />
+                            <div className="w-1.5 h-3 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '600ms' }} />
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs font-semibold text-blue-600 flex items-center gap-1.5">
+                                <span>AI speaking...</span>
+                                <span className="text-[10px] text-gray-500 font-normal bg-blue-50 border border-blue-100 px-1.5 py-0.5 rounded">Mic auto-muted</span>
+                            </span>
+                            {onInterrupt && (
+                                <button
+                                    type="button"
+                                    onClick={onInterrupt}
+                                    className="text-[10px] font-semibold bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-2 py-0.5 rounded-full transition-colors cursor-pointer"
+                                >
+                                    Interrupt
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                ) : isProcessing ? (
+                    <div className="flex flex-col items-center justify-center space-y-1">
+                        <div className="flex items-center space-x-2">
+                            <div className="w-2 h-2 bg-amber-500 rounded-full animate-ping" />
+                            <span className="text-xs font-semibold text-amber-700">Thinking & preparing response...</span>
+                        </div>
+                        <span className="text-[10px] text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full font-medium">
+                            🔇 Mic auto-muted
+                        </span>
                     </div>
                 ) : isCallActive ? (
-                    <span className="text-xs font-medium text-blue-600 animate-pulse">
-                        Listening... Speak anytime to chat
-                    </span>
+                    <div className="flex items-center space-x-2">
+                        <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                        </span>
+                        <span className="text-xs font-medium text-green-700">
+                            🎤 Listening... Speak anytime
+                        </span>
+                    </div>
                 ) : (
                     <span className="text-xs text-gray-400">
                         Click "Start Call" to begin live voice conversation

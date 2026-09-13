@@ -27,6 +27,7 @@ export function useVoiceChat(
     const [isConnected, setIsConnected] = useState(false);
     const [isCallActive, setIsCallActive] = useState(false);
     const [isAiSpeaking, setIsAiSpeaking] = useState(false);
+    const [isProcessing, setIsProcessing] = useState(false);
 
     const [availableVoices, setAvailableVoices] = useState<Voice[]>([]);
     const [selectedVoiceId, setSelectedVoiceId] = useState<string>(options?.initialVoiceId || '');
@@ -40,12 +41,25 @@ export function useVoiceChat(
     const recognitionRef = useRef<any>(null);
     const isCallActiveRef = useRef<boolean>(isCallActive);
     const restartListeningTimeoutRef = useRef<any>(null);
+    const watchdogTimeoutRef = useRef<any>(null);
     const consecutiveNetworkErrorsRef = useRef<number>(0);
 
     const selectedVoiceIdRef = useRef<string>(selectedVoiceId);
     const isAiSpeakingRef = useRef<boolean>(isAiSpeaking);
+    const isProcessingRef = useRef<boolean>(isProcessing);
     const conversationIdRef = useRef<string | undefined>(options?.conversationId);
     const userIdRef = useRef<string | undefined>(options?.userId);
+
+    const audioQueueRef = useRef<Blob[]>([]);
+    const isPlayingAudioRef = useRef<boolean>(false);
+    const currentAudioRef = useRef<HTMLAudioElement | null>(null);
+    const currentAudioUrlRef = useRef<string | null>(null);
+    const isTurnCompleteRef = useRef<boolean>(false);
+    const startListeningRef = useRef<() => void>(() => {});
+
+    const silenceTimerRef = useRef<any>(null);
+    const accumulatedTranscriptRef = useRef<string>('');
+    const baseTranscriptRef = useRef<string>('');
 
     useEffect(() => {
         isCallActiveRef.current = isCallActive;
@@ -60,11 +74,14 @@ export function useVoiceChat(
     }, [isAiSpeaking]);
 
     useEffect(() => {
+        isProcessingRef.current = isProcessing;
+    }, [isProcessing]);
+
+    useEffect(() => {
         conversationIdRef.current = options?.conversationId;
         userIdRef.current = options?.userId;
     }, [options?.conversationId, options?.userId]);
 
-    // Fetch available voices & settings on initialization
     useEffect(() => {
         let isMounted = true;
 
@@ -147,13 +164,53 @@ export function useVoiceChat(
         }
     }, [wsUrl, selectedVoiceId]);
 
+    const clearWatchdog = useCallback(() => {
+        if (watchdogTimeoutRef.current) {
+            clearTimeout(watchdogTimeoutRef.current);
+            watchdogTimeoutRef.current = null;
+        }
+    }, []);
+
+    const clearSilenceTimer = useCallback(() => {
+        if (silenceTimerRef.current) {
+            clearTimeout(silenceTimerRef.current);
+            silenceTimerRef.current = null;
+        }
+    }, []);
+
     const stopAllSpeech = useCallback(() => {
+        if (currentAudioRef.current) {
+            try {
+                currentAudioRef.current.pause();
+                currentAudioRef.current.currentTime = 0;
+                currentAudioRef.current.onended = null;
+                currentAudioRef.current.onerror = null;
+                currentAudioRef.current.src = '';
+            } catch (e) { }
+            currentAudioRef.current = null;
+        }
+
+        if (currentAudioUrlRef.current) {
+            URL.revokeObjectURL(currentAudioUrlRef.current);
+            currentAudioUrlRef.current = null;
+        }
+
         if ('speechSynthesis' in window) {
             window.speechSynthesis.cancel();
         }
+
+        audioQueueRef.current = [];
+        isPlayingAudioRef.current = false;
+        isTurnCompleteRef.current = true;
+        clearWatchdog();
+        clearSilenceTimer();
+        accumulatedTranscriptRef.current = '';
+        baseTranscriptRef.current = '';
         setIsAiSpeaking(false);
         isAiSpeakingRef.current = false;
-    }, []);
+        setIsProcessing(false);
+        isProcessingRef.current = false;
+    }, [clearWatchdog, clearSilenceTimer]);
 
     const isBraveBrowser = useCallback(async (): Promise<boolean> => {
         try {
@@ -167,9 +224,145 @@ export function useVoiceChat(
         }
     }, []);
 
-    // Helper to start/resume speech recognition with fresh instances to avoid Chrome network error drops
+    const finishAiTurn = useCallback(() => {
+        console.log('[VoiceChat] All queued AI audio playback completed, unmuting microphone...');
+        setIsAiSpeaking(false);
+        isAiSpeakingRef.current = false;
+        setIsProcessing(false);
+        isProcessingRef.current = false;
+        clearWatchdog();
+        clearSilenceTimer();
+        accumulatedTranscriptRef.current = '';
+        baseTranscriptRef.current = '';
+
+        if (isCallActiveRef.current) {
+            setTimeout(() => {
+                if (isCallActiveRef.current && !isAiSpeakingRef.current && !isProcessingRef.current) {
+                    startListeningRef.current();
+                }
+            }, 300);
+        }
+    }, [clearWatchdog, clearSilenceTimer]);
+
+    // Sequential audio player for binary audio chunks received from server
+    const playNextAudioInQueue = useCallback(() => {
+        if (audioQueueRef.current.length === 0) {
+            isPlayingAudioRef.current = false;
+            if (isTurnCompleteRef.current) {
+                finishAiTurn();
+            }
+            return;
+        }
+
+        const nextBlob = audioQueueRef.current.shift()!;
+        isPlayingAudioRef.current = true;
+        setIsAiSpeaking(true);
+        isAiSpeakingRef.current = true;
+        setIsProcessing(false);
+        isProcessingRef.current = false;
+
+        // Ensure recognition is aborted / muted while AI audio is playing
+        if (recognitionRef.current) {
+            try {
+                recognitionRef.current.abort();
+            } catch (e) { }
+            recognitionRef.current = null;
+        }
+
+        // Clean up previous URL
+        if (currentAudioUrlRef.current) {
+            URL.revokeObjectURL(currentAudioUrlRef.current);
+            currentAudioUrlRef.current = null;
+        }
+
+        const audioUrl = URL.createObjectURL(nextBlob);
+        currentAudioUrlRef.current = audioUrl;
+
+        const audio = new Audio(audioUrl);
+        currentAudioRef.current = audio;
+
+        const onDone = () => {
+            if (currentAudioRef.current === audio) {
+                currentAudioRef.current = null;
+            }
+            if (currentAudioUrlRef.current === audioUrl) {
+                URL.revokeObjectURL(audioUrl);
+                currentAudioUrlRef.current = null;
+            }
+            playNextAudioInQueue();
+        };
+
+        audio.onended = onDone;
+        audio.onerror = (err) => {
+            console.warn('[VoiceChat] Audio playback error:', err);
+            onDone();
+        };
+
+        audio.play().catch((err) => {
+            console.warn('[VoiceChat] Audio play failed:', err);
+            onDone();
+        });
+    }, [finishAiTurn]);
+
+    const muteAndSendUserSpeech = useCallback((sentence: string) => {
+        const finalSentence = sentence.trim();
+        if (!finalSentence) return;
+
+        clearSilenceTimer();
+        accumulatedTranscriptRef.current = '';
+        baseTranscriptRef.current = '';
+
+        console.log(`[VoiceChat] User sentence finalized after 3s pause. Sent to server: "${finalSentence}" (Muting microphone)`);
+        setUserTranscript(finalSentence);
+        setVoiceError(null);
+        consecutiveNetworkErrorsRef.current = 0;
+
+        setIsProcessing(true);
+        isProcessingRef.current = true;
+        isTurnCompleteRef.current = false;
+        audioQueueRef.current = [];
+        isPlayingAudioRef.current = false;
+
+        if (restartListeningTimeoutRef.current) {
+            clearTimeout(restartListeningTimeoutRef.current);
+            restartListeningTimeoutRef.current = null;
+        }
+        if (recognitionRef.current) {
+            try {
+                recognitionRef.current.abort();
+            } catch (e) { }
+            recognitionRef.current = null;
+        }
+
+        // Safety watchdog: if server drops or hangs, automatically unmute after 25s
+        clearWatchdog();
+        watchdogTimeoutRef.current = setTimeout(() => {
+            console.warn('[VoiceChat] Watchdog timeout: auto-unmuting microphone after processing inactivity');
+            audioQueueRef.current = [];
+            isPlayingAudioRef.current = false;
+            isTurnCompleteRef.current = true;
+            setIsAiSpeaking(false);
+            isAiSpeakingRef.current = false;
+            setIsProcessing(false);
+            isProcessingRef.current = false;
+            if (isCallActiveRef.current) {
+                startListeningRef.current();
+            }
+        }, 25000);
+
+        if (wsRef.current?.readyState === WebSocket.OPEN) {
+            wsRef.current.send(JSON.stringify({
+                type: 'USER_SPEECH',
+                sentence: finalSentence,
+                text: finalSentence,
+            }));
+        }
+    }, [clearWatchdog, clearSilenceTimer]);
+
+    // Helper to start/resume speech recognition when active and unmuted
     const startListening = useCallback(() => {
-        if (!isCallActiveRef.current || isAiSpeakingRef.current) {
+        if (!isCallActiveRef.current || isAiSpeakingRef.current || isProcessingRef.current) {
+            console.log('[VoiceChat] startListening skipped (active:', isCallActiveRef.current, 'aiSpeaking:', isAiSpeakingRef.current, 'processing:', isProcessingRef.current, ')');
             return;
         }
 
@@ -193,17 +386,13 @@ export function useVoiceChat(
 
         try {
             const recognition = new SpeechRec();
-            // continuous: false allows each spoken sentence to finish cleanly without hanging connections
-            recognition.continuous = false;
+            // continuous: true prevents cutting off mid-sentence on short natural pauses
+            recognition.continuous = true;
             recognition.interimResults = true;
             recognition.lang = 'en-US';
 
-            let currentFinal = '';
-            let currentInterim = '';
-            let hasSentChunk = false;
-
             recognition.onstart = () => {
-                console.log('[VoiceChat] Speech recognition listening started');
+                console.log('[VoiceChat] Speech recognition listening started (continuous: true, 3s pause detection active)');
             };
 
             recognition.onspeechstart = () => {
@@ -217,49 +406,40 @@ export function useVoiceChat(
             };
 
             recognition.onresult = (event: any) => {
-                currentFinal = '';
-                currentInterim = '';
+                let sessionFinal = '';
+                let sessionInterim = '';
 
-                for (let i = event.resultIndex; i < event.results.length; i++) {
+                for (let i = 0; i < event.results.length; i++) {
                     const res = event.results[i];
                     const transcript = res[0]?.transcript || '';
                     if (res.isFinal) {
-                        currentFinal += transcript + ' ';
+                        sessionFinal += transcript + ' ';
                     } else {
-                        currentInterim += transcript;
+                        sessionInterim += transcript;
                     }
                 }
 
-                const textToProcess = (currentFinal || currentInterim).trim();
+                const currentSessionText = (sessionFinal + sessionInterim).trim();
+                const fullText = (baseTranscriptRef.current ? baseTranscriptRef.current + ' ' : '') + currentSessionText;
+                const trimmedFullText = fullText.trim();
 
-                if (textToProcess) {
-                    setUserTranscript(textToProcess);
+                if (trimmedFullText) {
+                    accumulatedTranscriptRef.current = trimmedFullText;
+                    setUserTranscript(trimmedFullText);
                     setVoiceError(null);
                     consecutiveNetworkErrorsRef.current = 0;
-                }
 
-                if (textToProcess && isAiSpeakingRef.current) {
-                    console.log('[VoiceChat] User speech detected during AI playback, interrupting AI...');
-                    if (wsRef.current?.readyState === WebSocket.OPEN) {
-                        wsRef.current.send(JSON.stringify({ type: 'INTERRUPT' }));
-                    }
-                    stopAllSpeech();
-                }
+                    // User is actively speaking: clear any prior silence timer
+                    clearSilenceTimer();
 
-                // If this utterance produced a final chunk, send immediately
-                if (currentFinal.trim()) {
-                    const finalSentence = currentFinal.trim();
-                    currentFinal = '';
-                    currentInterim = '';
-                    hasSentChunk = true;
-                    console.log(`[VoiceChat] User sentence sent to server: "${finalSentence}"`);
-                    if (wsRef.current?.readyState === WebSocket.OPEN) {
-                        wsRef.current.send(JSON.stringify({
-                            type: 'USER_SPEECH',
-                            sentence: finalSentence,
-                            text: finalSentence,
-                        }));
-                    }
+                    // Only send when there has been NO speech for at least 3 seconds (3000ms pause)
+                    silenceTimerRef.current = setTimeout(() => {
+                        const candidate = accumulatedTranscriptRef.current.trim();
+                        if (candidate && !isProcessingRef.current && !isAiSpeakingRef.current) {
+                            console.log(`[VoiceChat] 3-second silence detected. Finalizing user sentence: "${candidate}"`);
+                            muteAndSendUserSpeech(candidate);
+                        }
+                    }, 3000);
                 }
             };
 
@@ -268,7 +448,6 @@ export function useVoiceChat(
                 console.warn('[VoiceChat] Speech recognition notice:', errorType);
 
                 if (errorType === 'no-speech') {
-                    // Harmless pause in speech
                     return;
                 }
 
@@ -294,24 +473,13 @@ export function useVoiceChat(
             };
 
             recognition.onend = () => {
-                // If there was pending interim text that didn't get marked final before ending, send it now
-                const remaining = (currentFinal || currentInterim).trim();
-                if (remaining && !hasSentChunk && wsRef.current?.readyState === WebSocket.OPEN) {
-                    console.log(`[VoiceChat] Sending user sentence on utterance end: "${remaining}"`);
-                    setUserTranscript(remaining);
-                    wsRef.current.send(JSON.stringify({
-                        type: 'USER_SPEECH',
-                        sentence: remaining,
-                        text: remaining,
-                    }));
+                // If there was accumulated text, preserve it as base transcript in case session ended
+                if (accumulatedTranscriptRef.current) {
+                    baseTranscriptRef.current = accumulatedTranscriptRef.current;
                 }
 
-                currentFinal = '';
-                currentInterim = '';
-
-                // Restart fresh recognition cycle if call is active and AI is not speaking
-                if (isCallActiveRef.current && !isAiSpeakingRef.current) {
-                    // Pause rapid looping if there are consecutive network errors to prevent spamming
+                // Only restart if call is active and mic is not muted for AI speech or server processing
+                if (isCallActiveRef.current && !isAiSpeakingRef.current && !isProcessingRef.current) {
                     if (consecutiveNetworkErrorsRef.current >= 3) {
                         console.warn('[VoiceChat] Auto-restart paused due to persistent network errors. Click Retry to reconnect.');
                         return;
@@ -319,7 +487,7 @@ export function useVoiceChat(
 
                     const delay = consecutiveNetworkErrorsRef.current > 0 ? 1500 : 120;
                     restartListeningTimeoutRef.current = setTimeout(() => {
-                        startListening();
+                        startListeningRef.current();
                     }, delay);
                 }
             };
@@ -328,13 +496,18 @@ export function useVoiceChat(
             recognitionRef.current = recognition;
         } catch (error) {
             console.warn('[VoiceChat] Recognition start error:', error);
-            if (isCallActiveRef.current && !isAiSpeakingRef.current) {
+            if (isCallActiveRef.current && !isAiSpeakingRef.current && !isProcessingRef.current) {
                 restartListeningTimeoutRef.current = setTimeout(() => {
-                    startListening();
+                    startListeningRef.current();
                 }, 500);
             }
         }
-    }, [stopAllSpeech, isBraveBrowser]);
+    }, [stopAllSpeech, isBraveBrowser, muteAndSendUserSpeech, clearSilenceTimer]);
+
+    // Keep ref updated to avoid stale closures in callbacks
+    useEffect(() => {
+        startListeningRef.current = startListening;
+    }, [startListening]);
 
     const connectWebSocket = useCallback((voiceId?: string) => {
         if (wsRef.current) {
@@ -343,6 +516,7 @@ export function useVoiceChat(
 
         const fullWsUrl = buildWsUrl(wsUrl, voiceId);
         const ws = new WebSocket(fullWsUrl);
+        ws.binaryType = 'arraybuffer';
 
         ws.onopen = () => {
             console.log('[VoiceChat] WebSocket connected');
@@ -357,42 +531,46 @@ export function useVoiceChat(
         ws.onerror = (err) => console.error('[VoiceChat] WebSocket error:', err);
 
         ws.onmessage = (event) => {
+            // Direct audio received from server
+            if (event.data instanceof ArrayBuffer || event.data instanceof Blob) {
+                const audioBlob = event.data instanceof Blob
+                    ? event.data
+                    : new Blob([event.data], { type: 'audio/mp3' });
+
+                console.log(`[VoiceChat] AI audio received directly (${audioBlob.size} bytes)`);
+
+                setIsProcessing(false);
+                isProcessingRef.current = false;
+                clearWatchdog();
+
+                audioQueueRef.current.push(audioBlob);
+
+                if (!isPlayingAudioRef.current) {
+                    playNextAudioInQueue();
+                }
+                return;
+            }
+
             if (typeof event.data === 'string') {
                 try {
                     const data = JSON.parse(event.data);
 
-                    if (data.type === 'AI_SPEECH' && data.text) {
-                        console.log(`[VoiceChat] AI speech received: "${data.text}"`);
-                        setAiTranscript(data.text);
+                    if (data.type === 'AI_PROCESSING_START') {
+                        console.log('[VoiceChat] AI processing started on server');
+                        setIsProcessing(true);
+                        isProcessingRef.current = true;
+                        isTurnCompleteRef.current = false;
+                        if (recognitionRef.current) {
+                            try { recognitionRef.current.abort(); } catch (e) { }
+                            recognitionRef.current = null;
+                        }
+                    } else if (data.type === 'AI_TURN_COMPLETE') {
+                        console.log('[VoiceChat] AI turn complete received from server');
+                        isTurnCompleteRef.current = true;
 
-                        if ('speechSynthesis' in window) {
-                            const utterance = new SpeechSynthesisUtterance(data.text);
-                            utterance.lang = 'en-US';
-
-                            utterance.onstart = () => {
-                                setIsAiSpeaking(true);
-                                isAiSpeakingRef.current = true;
-                                if (recognitionRef.current) {
-                                    try { recognitionRef.current.abort(); } catch (e) { }
-                                    recognitionRef.current = null;
-                                }
-                            };
-
-                            const handleDone = () => {
-                                setIsAiSpeaking(false);
-                                isAiSpeakingRef.current = false;
-                                if (isCallActiveRef.current) {
-                                    setTimeout(() => {
-                                        if (isCallActiveRef.current && !isAiSpeakingRef.current) {
-                                            startListening();
-                                        }
-                                    }, 200);
-                                }
-                            };
-
-                            utterance.onend = handleDone;
-                            utterance.onerror = handleDone;
-                            window.speechSynthesis.speak(utterance);
+                        // If nothing is playing and audio queue is empty, finish turn immediately
+                        if (!isPlayingAudioRef.current && audioQueueRef.current.length === 0) {
+                            finishAiTurn();
                         }
                     }
                 } catch {
@@ -403,7 +581,7 @@ export function useVoiceChat(
 
         wsRef.current = ws;
         return ws;
-    }, [wsUrl, buildWsUrl, startListening]);
+    }, [wsUrl, buildWsUrl, playNextAudioInQueue, finishAiTurn, clearWatchdog]);
 
     useEffect(() => {
         connectWebSocket();
@@ -412,14 +590,22 @@ export function useVoiceChat(
             if (wsRef.current) {
                 wsRef.current.close();
             }
+            clearWatchdog();
+            stopAllSpeech();
         };
-    }, [connectWebSocket]);
+    }, [connectWebSocket, clearWatchdog, stopAllSpeech]);
 
     // Start Call
     const startCall = useCallback(async () => {
         try {
             setVoiceError(null);
             consecutiveNetworkErrorsRef.current = 0;
+
+            // Unlock browser audio playback policy on user click
+            try {
+                const unlockAudio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA');
+                unlockAudio.play().catch(() => {});
+            } catch (e) { }
 
             // 1. Verify microphone permissions first
             if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
@@ -443,18 +629,28 @@ export function useVoiceChat(
                 return;
             }
 
+            clearSilenceTimer();
+            accumulatedTranscriptRef.current = '';
+            baseTranscriptRef.current = '';
             setIsCallActive(true);
             isCallActiveRef.current = true;
+            setIsProcessing(false);
+            isProcessingRef.current = false;
+            setIsAiSpeaking(false);
+            isAiSpeakingRef.current = false;
             startListening();
         } catch (error: any) {
             console.error('[VoiceChat] Failed to start call:', error);
             setVoiceError(`Failed to start call: ${error?.message || error}`);
         }
-    }, [connectWebSocket, startListening]);
+    }, [connectWebSocket, startListening, clearSilenceTimer]);
 
     const endCall = useCallback(() => {
         setIsCallActive(false);
         isCallActiveRef.current = false;
+        clearSilenceTimer();
+        accumulatedTranscriptRef.current = '';
+        baseTranscriptRef.current = '';
         stopAllSpeech();
         consecutiveNetworkErrorsRef.current = 0;
 
@@ -469,22 +665,46 @@ export function useVoiceChat(
             } catch (e) { }
             recognitionRef.current = null;
         }
-    }, [stopAllSpeech]);
+    }, [stopAllSpeech, clearSilenceTimer]);
 
     const retryListening = useCallback(() => {
         consecutiveNetworkErrorsRef.current = 0;
         setVoiceError(null);
+        clearSilenceTimer();
+        accumulatedTranscriptRef.current = '';
+        baseTranscriptRef.current = '';
+        setIsProcessing(false);
+        isProcessingRef.current = false;
+        setIsAiSpeaking(false);
+        isAiSpeakingRef.current = false;
         if (isCallActiveRef.current) {
             startListening();
         } else {
             startCall();
         }
-    }, [startListening, startCall]);
+    }, [startListening, startCall, clearSilenceTimer]);
+
+    const interrupt = useCallback(() => {
+        console.log('[VoiceChat] Interrupt requested by user');
+        if (wsRef.current?.readyState === WebSocket.OPEN) {
+            wsRef.current.send(JSON.stringify({ type: 'INTERRUPT' }));
+        }
+        stopAllSpeech();
+        if (isCallActiveRef.current) {
+            setTimeout(() => {
+                if (isCallActiveRef.current && !isAiSpeakingRef.current && !isProcessingRef.current) {
+                    startListeningRef.current();
+                }
+            }, 300);
+        }
+    }, [stopAllSpeech]);
 
     return {
         isConnected,
         isCallActive,
         isAiSpeaking,
+        isProcessing,
+        isMicMuted: !isCallActive || isProcessing || isAiSpeaking,
         availableVoices,
         selectedVoiceId,
         setSelectedVoiceId,
@@ -494,6 +714,7 @@ export function useVoiceChat(
         aiTranscript,
         startCall,
         endCall,
+        interrupt,
         retryListening,
         clearVoiceError: () => setVoiceError(null),
     };

@@ -7,6 +7,7 @@ allowBuilds:
   '@scarf/scarf': set this to true or false
   bufferutil: true
   esbuild: true
+  msedge-tts: false
   protobufjs: true
   sharp: true
   utf-8-validate: true

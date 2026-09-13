@@ -1,8 +1,16 @@
 import { mastra } from '../mastra';
 import { redisService } from './redis.service';
+import { MsEdgeTTS, OUTPUT_FORMAT } from 'msedge-tts';
+import { Readable } from 'stream';
 
 export class VoiceService {
     private activeSessions = new Map<string, AbortController>();
+    private tts: MsEdgeTTS;
+
+    constructor() {
+        this.tts = new MsEdgeTTS();
+        this.tts.setMetadata("en-US-AriaNeural", OUTPUT_FORMAT.AUDIO_24KHZ_96KBITRATE_MONO_MP3).catch(console.error);
+    }
 
     async startSession(conversationId: string, userId: string): Promise<void> {
         console.log(`[VoiceService] Starting session for conversation: ${conversationId}, user: ${userId}`);
@@ -34,12 +42,31 @@ export class VoiceService {
         }
     }
 
+    private async generateAudioBuffer(text: string): Promise<Buffer> {
+        return new Promise((resolve, reject) => {
+            const chunks: Buffer[] = [];
+            const { audioStream } = this.tts.toStream(text);
+
+            audioStream.on('data', (chunk: Buffer) => {
+                chunks.push(chunk);
+            });
+
+            audioStream.on('end', () => {
+                resolve(Buffer.concat(chunks));
+            });
+
+            audioStream.on('error', (err: Error) => {
+                reject(err);
+            });
+        });
+    }
+
     async processSentence(
         conversationId: string,
         userId: string,
         sentence: string,
-        onAiSentence: (sentence: string) => void,
-
+        onAiAudio: (audio: Buffer) => void,
+        onTurnComplete?: () => void,
     ): Promise<void> {
         console.log(`[VoiceService] User sentence received (${conversationId}): "${sentence}"`);
 
@@ -51,9 +78,11 @@ export class VoiceService {
         const abortController = new AbortController();
         this.activeSessions.set(conversationId, abortController);
 
-        const agent = mastra.getAgent('agent');
+        const agent = mastra.getAgentById('agent');
+
         if (!agent) {
             this.activeSessions.delete(conversationId);
+            if (onTurnComplete) onTurnComplete();
             throw new Error('Agent not found in Mastra registry');
         }
 
@@ -65,6 +94,7 @@ export class VoiceService {
 
         try {
             console.log(`[VoiceService] Streaming agent response for conversation: ${conversationId}`);
+
             const mastraStream = await agent.stream(
                 [{ role: 'user', content: sentence }],
                 {
@@ -82,12 +112,12 @@ export class VoiceService {
 
                 buffer += token;
 
-                // Split stream into full sentences for natural audio synthesis
                 if (buffer.match(/[.!?]\s*$/)) {
                     const completeSentence = buffer.trim();
                     if (completeSentence) {
                         console.log(`[VoiceService] AI sentence: "${completeSentence}"`);
-                        onAiSentence(completeSentence);
+                        const audioBuffer = await this.generateAudioBuffer(completeSentence);
+                        onAiAudio(audioBuffer);
                     }
                     buffer = '';
                 }
@@ -96,9 +126,9 @@ export class VoiceService {
             if (buffer.trim() && !abortController.signal.aborted) {
                 const finalSentence = buffer.trim();
                 console.log(`[VoiceService] AI final sentence: "${finalSentence}"`);
-                onAiSentence(finalSentence);
+                const audioBuffer = await this.generateAudioBuffer(finalSentence);
+                onAiAudio(audioBuffer);
             }
-
             console.log(`[VoiceService] Turn completed for conversation: ${conversationId}`);
         } catch (error) {
             console.error(`[VoiceService] Turn error for conversation ${conversationId}:`, error);
@@ -112,6 +142,10 @@ export class VoiceService {
                 await redisService.updateVoiceSessionStatus(conversationId, 'connected');
             } catch (error) {
                 console.error(`[VoiceService] Failed to update connected status:`, error);
+            }
+
+            if (onTurnComplete) {
+                onTurnComplete();
             }
         }
     }
