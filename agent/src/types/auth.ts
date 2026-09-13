@@ -15,6 +15,11 @@ export interface RegisterCredentials {
   name: string;
   email: string;
   password: string;
+  age?: string;
+  studyStandard?: string;
+  englishRating?: string;
+  learningGoal?: string;
+  hobbies?: string;
 }
 
 export interface AuthResponseData {

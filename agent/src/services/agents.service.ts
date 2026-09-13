@@ -1,4 +1,5 @@
 import { mastra } from '../mastra';
+import { RequestContext } from '@mastra/core/request-context';
 
 export class AgentService {
   async chat(conversationId: string, userId: string, message: string) {
@@ -7,11 +8,17 @@ export class AgentService {
       throw new Error('Agent not found');
     }
 
+    const requestContext = new RequestContext<{ userId: string; resourceId: string }>();
+    requestContext.set('userId', userId);
+    requestContext.set('resourceId', userId);
+
     return agent.generate(message, {
       memory: {
         thread: conversationId,
         resource: userId,
       },
+      requestContext,
+      maxSteps: 10,
     });
   }
 
@@ -52,11 +59,16 @@ export class AgentService {
 
     return result.messages;
   }
- async chatStream(conversationId: string, userId: string, message: string) {
+
+  async chatStream(conversationId: string, userId: string, message: string) {
     const agent = mastra.getAgent('agent');
     if (!agent) {
       throw new Error('Agent not found');
     }
+
+    const requestContext = new RequestContext<{ userId: string; resourceId: string }>();
+    requestContext.set('userId', userId);
+    requestContext.set('resourceId', userId);
 
     return agent.stream(
       [{ role: 'user', content: message }],
@@ -65,6 +77,8 @@ export class AgentService {
           thread: conversationId,
           resource: userId,
         },
+        requestContext,
+        maxSteps: 10,
       }
     );
   }

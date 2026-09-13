@@ -13,7 +13,7 @@ export const register = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, age, studyStandard, englishRating, learningGoal, hobbies } = req.body;
 
     if (!name || !email || !password) {
       res.status(400).json({
@@ -43,7 +43,16 @@ export const register = async (
       return;
     }
 
-    const authData = await registerUser({ name, email, password });
+    const authData = await registerUser({
+      name,
+      email,
+      password,
+      age,
+      studyStandard,
+      englishRating,
+      learningGoal,
+      hobbies,
+    });
 
     res.status(201).json({
       success: true,

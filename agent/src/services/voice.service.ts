@@ -2,6 +2,8 @@ import { mastra } from '../mastra';
 import { redisService } from './redis.service';
 import { MsEdgeTTS, OUTPUT_FORMAT } from 'msedge-tts';
 import { Readable } from 'stream';
+import { RequestContext } from '@mastra/core/request-context';
+import { getUserProfile } from './auth.service';
 
 export class VoiceService {
     private activeSessions = new Map<string, AbortController>();
@@ -15,10 +17,29 @@ export class VoiceService {
     async startSession(conversationId: string, userId: string): Promise<void> {
         console.log(`[VoiceService] Starting session for conversation: ${conversationId}, user: ${userId}`);
         try {
+            let userProfileData: any = null;
+            try {
+                const profile = await getUserProfile(userId);
+                console.log("profile", profile)
+                if (profile) {
+                    userProfileData = {
+                        age: profile.age,
+                        studyStandard: profile.studyStandard,
+                        englishRating: profile.englishRating,
+                        learningGoal: profile.learningGoal,
+                        hobbies: profile.hobbies,
+                        isOnboarded: profile.isOnboarded,
+                    };
+                }
+            } catch (err) {
+                console.warn(`[VoiceService] Could not fetch user profile on session start:`, err);
+            }
+            console.log("userProfileData", userProfileData)
             await redisService.saveVoiceSession({
                 conversationId,
                 userId,
                 status: 'connected',
+                userProfile: userProfileData,
                 createdAt: new Date().toISOString(),
                 lastActiveAt: new Date().toISOString(),
             });
@@ -95,10 +116,21 @@ export class VoiceService {
         try {
             console.log(`[VoiceService] Streaming agent response for conversation: ${conversationId}`);
 
+            const session = await redisService.getVoiceSession(conversationId);
+            const requestContext = new RequestContext<{ userId: string; resourceId: string; userProfile?: any }>();
+            requestContext.set('userId', userId);
+            requestContext.set('resourceId', userId);
+            console.log("userProfile in processsentence", session?.userProfile)
+            if (session?.userProfile) {
+                requestContext.set('userProfile', session.userProfile);
+            }
+
             const mastraStream = await agent.stream(
                 [{ role: 'user', content: sentence }],
                 {
                     memory: { thread: conversationId, resource: userId },
+                    requestContext,
+                    maxSteps: 10,
                 }
             );
 

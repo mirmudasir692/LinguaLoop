@@ -1,4 +1,5 @@
 import User from '../models/User';
+import { IUserProfile, UserProfile } from '../models/User-Profile';
 import type { AuthResponseData, IUser, RegisterInput } from '../types';
 import { generateToken } from '../utils/authUtils';
 
@@ -18,6 +19,15 @@ export const registerUser = async (userData: RegisterInput): Promise<AuthRespons
     name,
     email: email.toLowerCase(),
     password,
+  });
+
+  await upsertUserProfile(user._id.toString(), {
+    age: userData.age || '',
+    studyStandard: userData.studyStandard || '',
+    englishRating: userData.englishRating || 'Intermediate',
+    learningGoal: userData.learningGoal || '',
+    hobbies: userData.hobbies || '',
+    isOnboarded: true,
   });
 
   const token = generateToken(user._id.toString());
@@ -73,4 +83,22 @@ export const getCurrentUser = async (userId: string): Promise<IUser | null> => {
 
 export const logoutUser = async (): Promise<{ message: string }> => {
   return { message: 'Logged out successfully' };
+};
+
+export const getUserProfile = async (userId: string): Promise<IUserProfile | null> => {
+  return UserProfile.findOne({ userId });
+};
+
+export const upsertUserProfile = async (userId: string, data: Partial<IUserProfile>): Promise<IUserProfile> => {
+  const existing = await getUserProfile(userId);
+  const mergedData = { ...existing?.toObject(), ...data };
+
+  const requiredFields = ['age', 'studyStandard', 'englishRating', 'learningGoal', 'hobbies'];
+  const isComplete = requiredFields.every(field => mergedData[field]);
+
+  return UserProfile.findOneAndUpdate(
+    { userId },
+    { $set: { ...data, isOnboarded: isComplete } },
+    { new: true, upsert: true }
+  );
 };

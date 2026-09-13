@@ -26,6 +26,12 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [age, setAge] = useState('');
+  const [englishRating, setEnglishRating] = useState('Intermediate');
+  const [learningGoal, setLearningGoal] = useState('');
+  const [hobbies, setHobbies] = useState('');
+  const [studyStandard, setStudyStandard] = useState('');
+
   const [errors, setErrors] = useState<{
     name?: string;
     email?: string;
@@ -85,6 +91,11 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
         name: name.trim(),
         email: email.trim(),
         password,
+        age: age.trim(),
+        studyStandard: studyStandard.trim(),
+        englishRating,
+        learningGoal: learningGoal.trim(),
+        hobbies: hobbies.trim(),
       });
       if (onSuccess) {
         onSuccess();
@@ -103,7 +114,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
     <Card className="auth-card">
       <CardHeader>
         <CardTitle>Create Account</CardTitle>
-        <CardSubtitle>Join to access your secure developer workspace</CardSubtitle>
+        <CardSubtitle>Set up your profile to personalize your AI English Practice</CardSubtitle>
       </CardHeader>
 
       <CardContent>
@@ -204,6 +215,77 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
             }
             required
           />
+
+          <div style={{ marginTop: '1rem', borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '1rem' }}>
+            <h4 style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-primary, #fff)', marginBottom: '0.75rem' }}>
+              English Practice Profile
+            </h4>
+
+            <Input
+              id="register-age"
+              type="text"
+              label="Age"
+              placeholder="e.g. 20"
+              value={age}
+              onChange={(e) => setAge(e.target.value)}
+              disabled={isSubmitting}
+            />
+
+            <div className="input-container" style={{ marginBottom: '1rem' }}>
+              <label htmlFor="register-english-level" className="input-label" style={{ display: 'block', fontSize: '0.85rem', fontWeight: 500, marginBottom: '0.25rem' }}>
+                English Proficiency Level
+              </label>
+              <select
+                id="register-english-level"
+                value={englishRating}
+                onChange={(e) => setEnglishRating(e.target.value)}
+                disabled={isSubmitting}
+                style={{
+                  width: '100%',
+                  padding: '0.6rem 0.75rem',
+                  borderRadius: '6px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  color: 'var(--text-primary, #fff)',
+                  outline: 'none',
+                }}
+              >
+                <option value="Beginner" style={{ color: '#000' }}>Beginner</option>
+                <option value="Intermediate" style={{ color: '#000' }}>Intermediate</option>
+                <option value="Advanced" style={{ color: '#000' }}>Advanced</option>
+              </select>
+            </div>
+
+            <Input
+              id="register-learning-goal"
+              type="text"
+              label="Learning Goal"
+              placeholder="e.g. Conversational fluency, Job interviews"
+              value={learningGoal}
+              onChange={(e) => setLearningGoal(e.target.value)}
+              disabled={isSubmitting}
+            />
+
+            <Input
+              id="register-hobbies"
+              type="text"
+              label="Hobbies & Interests"
+              placeholder="e.g. Reading, Sports, Pigeons, Travel"
+              value={hobbies}
+              onChange={(e) => setHobbies(e.target.value)}
+              disabled={isSubmitting}
+            />
+
+            <Input
+              id="register-study-standard"
+              type="text"
+              label="Education / Occupation"
+              placeholder="e.g. College student, High school, Professional"
+              value={studyStandard}
+              onChange={(e) => setStudyStandard(e.target.value)}
+              disabled={isSubmitting}
+            />
+          </div>
 
 
           <Button

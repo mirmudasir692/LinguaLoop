@@ -14,6 +14,7 @@ import { chatRoute } from '@mastra/ai-sdk'
 export const mastra = new Mastra({
   agents: { agent },
 
+
   storage: getCachedMongoStore(),
 
   vectors: {

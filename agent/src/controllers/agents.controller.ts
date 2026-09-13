@@ -83,10 +83,8 @@ chat = async (
       if (!userId) {
         return sendUnauthorized(res, 'User ID is required');
       }
-      console.log('Fetching conversations for userId:', userId);
 
       const conversations = await agentService.getConversations(userId);
-      console.log('Conversations retrieved:', conversations);
       sendSuccess(res, 'Conversations retrieved successfully', conversations);
     } catch (error) {
       next(error);
