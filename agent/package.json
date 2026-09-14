@@ -21,7 +21,7 @@
     "format": "prettier --write \"src/**/*.{ts,tsx,css,json,md}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,css,json,md}\"",
     "type-check": "tsc --noEmit",
-    "prepare": "cd .. && husky agent/.husky"
+    "prepare": "cd .. && husky .husky"
   },
   "keywords": [],
   "author": "",
