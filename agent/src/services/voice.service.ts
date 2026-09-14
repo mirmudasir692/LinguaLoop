@@ -1,7 +1,6 @@
 import { mastra } from '../mastra';
 import { redisService } from './redis.service';
 import { MsEdgeTTS, OUTPUT_FORMAT } from 'msedge-tts';
-import { Readable } from 'stream';
 import { RequestContext } from '@mastra/core/request-context';
 import { getUserProfile } from './auth.service';
 
@@ -15,7 +14,6 @@ export class VoiceService {
     }
 
     async startSession(conversationId: string, userId: string): Promise<void> {
-        console.log(`[VoiceService] Starting session for conversation: ${conversationId}, user: ${userId}`);
         try {
             let userProfileData: any = null;
             try {
@@ -32,9 +30,7 @@ export class VoiceService {
                     };
                 }
             } catch (err) {
-                console.warn(`[VoiceService] Could not fetch user profile on session start:`, err);
             }
-            console.log("userProfileData", userProfileData)
             await redisService.saveVoiceSession({
                 conversationId,
                 userId,
@@ -110,17 +106,14 @@ export class VoiceService {
         try {
             await redisService.updateVoiceSessionStatus(conversationId, 'streaming');
         } catch (error) {
-            console.error(`[VoiceService] Failed to update streaming status:`, error);
         }
 
         try {
-            console.log(`[VoiceService] Streaming agent response for conversation: ${conversationId}`);
 
             const session = await redisService.getVoiceSession(conversationId);
             const requestContext = new RequestContext<{ userId: string; resourceId: string; userProfile?: any }>();
             requestContext.set('userId', userId);
             requestContext.set('resourceId', userId);
-            console.log("userProfile in processsentence", session?.userProfile)
             if (session?.userProfile) {
                 requestContext.set('userProfile', session.userProfile);
             }
@@ -138,7 +131,6 @@ export class VoiceService {
 
             for await (const token of mastraStream.textStream) {
                 if (abortController.signal.aborted) {
-                    console.log(`[VoiceService] Stream aborted by interrupt for conversation: ${conversationId}`);
                     break;
                 }
 
@@ -157,13 +149,10 @@ export class VoiceService {
 
             if (buffer.trim() && !abortController.signal.aborted) {
                 const finalSentence = buffer.trim();
-                console.log(`[VoiceService] AI final sentence: "${finalSentence}"`);
                 const audioBuffer = await this.generateAudioBuffer(finalSentence);
                 onAiAudio(audioBuffer);
             }
-            console.log(`[VoiceService] Turn completed for conversation: ${conversationId}`);
         } catch (error) {
-            console.error(`[VoiceService] Turn error for conversation ${conversationId}:`, error);
             throw error;
         } finally {
             if (this.activeSessions.get(conversationId) === abortController) {
@@ -186,12 +175,10 @@ export class VoiceService {
         try {
             await redisService.updateVoiceSessionActivity(conversationId);
         } catch (error) {
-            console.error(`[VoiceService] Failed to update activity:`, error);
         }
     }
 
     async endSession(conversationId: string): Promise<void> {
-        console.log(`[VoiceService] Ending session for conversation: ${conversationId}`);
         const active = this.activeSessions.get(conversationId);
         if (active) {
             active.abort();
@@ -201,7 +188,6 @@ export class VoiceService {
         try {
             await redisService.deleteVoiceSession(conversationId);
         } catch (error) {
-            console.error(`[VoiceService] Failed to delete session from Redis:`, error);
         }
     }
 }

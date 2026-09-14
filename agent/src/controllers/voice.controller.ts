@@ -20,7 +20,6 @@ export class VoiceConnectionHandler {
     }
 
     private init(): void {
-        console.log(`[VoiceConnection] Connection opened for conversation: ${this.conversationId}`);
         voiceService.startSession(this.conversationId, this.userId);
 
         this.ws.on('message', (data: Buffer | string) => this.onMessage(data));
@@ -75,12 +74,6 @@ export class VoiceConnectionHandler {
         }
     }
 
-    private sendAiSentence(sentence: string): void {
-        if (this.ws.readyState === WebSocket.OPEN) {
-            console.log(`[VoiceConnection] Sending AI sentence to client: "${sentence}"`);
-            this.ws.send(JSON.stringify({ type: 'AI_SPEECH', text: sentence }));
-        }
-    }
 
     private onClose(): void {
         console.log(`[VoiceConnection] Connection closed for conversation: ${this.conversationId}`);
