@@ -3,7 +3,7 @@ import { MongoDBStore, MongoDBVector } from '@mastra/mongodb';
 import { getMongoStorageConfig } from '../config/storage';
 
 let mongoStore: MongoDBStore | null = null;
-let mongoVector: MongoDBVector | null = null; 
+let mongoVector: MongoDBVector | null = null;
 
 export function getMongoStore(): MongoDBStore {
   if (mongoStore) {

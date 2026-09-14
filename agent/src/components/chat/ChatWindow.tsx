@@ -81,7 +81,9 @@ export function ChatWindow() {
             {currentConversation?.title || 'LinguaLoop Chat'}
           </h1>
           <div className="flex items-center gap-2 mt-0.5">
-            <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-red-400'}`} />
+            <div
+              className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-red-400'}`}
+            />
             <span className="text-xs text-gray-500 font-medium">
               {isConnected ? 'Voice WebSocket Ready' : 'WebSocket Connecting...'}
             </span>
@@ -106,10 +108,11 @@ export function ChatWindow() {
 
           <button
             onClick={toggleCall}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all shadow-sm ${isCallActive
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all shadow-sm ${
+              isCallActive
                 ? 'bg-red-600 hover:bg-red-700 text-white shadow-red-500/20 animate-pulse'
                 : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-blue-500/20'
-              }`}
+            }`}
           >
             {isCallActive ? (
               <>
@@ -190,10 +193,11 @@ export function ChatWindow() {
           type="button"
           onClick={toggleCall}
           title={isCallActive ? 'End Call' : 'Start Voice Call'}
-          className={`p-2.5 rounded-lg border transition-colors flex items-center justify-center ${isCallActive
+          className={`p-2.5 rounded-lg border transition-colors flex items-center justify-center ${
+            isCallActive
               ? 'bg-red-50 border-red-200 text-red-600 hover:bg-red-100'
               : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200'
-            }`}
+          }`}
         >
           {isCallActive ? <PhoneOff size={18} /> : <Mic size={18} />}
         </button>

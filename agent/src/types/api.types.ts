@@ -2,16 +2,16 @@ import { Request } from 'express';
 import { IUser } from './user.types';
 
 export interface AuthenticatedRequest<
-  P = {},
-  ResBody = any,
-  ReqBody = any,
-  ReqQuery = qs.ParsedQs
+  P = Record<string, string>,
+  ResBody = unknown,
+  ReqBody = unknown,
+  ReqQuery = qs.ParsedQs,
 > extends Request<P, ResBody, ReqBody, ReqQuery> {
   userId: string;
-  user?: IUser
+  user?: IUser;
 }
 
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   success: boolean;
   message: string;
   data: T | null;

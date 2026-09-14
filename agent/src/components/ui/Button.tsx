@@ -38,13 +38,7 @@ export const Button: React.FC<ButtonProps> = ({
     .join(' ');
 
   return (
-    <button
-      type={type}
-      className={classes}
-      disabled={isDisabled}
-      aria-busy={isLoading}
-      {...props}
-    >
+    <button type={type} className={classes} disabled={isDisabled} aria-busy={isLoading} {...props}>
       {isLoading ? (
         <span className="btn-loading-content">
           <span className="btn-spinner" aria-hidden="true" />
@@ -52,12 +46,19 @@ export const Button: React.FC<ButtonProps> = ({
         </span>
       ) : (
         <span className="btn-content">
-          {leftIcon && <span className="btn-icon btn-icon-left" aria-hidden="true">{leftIcon}</span>}
+          {leftIcon && (
+            <span className="btn-icon btn-icon-left" aria-hidden="true">
+              {leftIcon}
+            </span>
+          )}
           <span>{children}</span>
-          {rightIcon && <span className="btn-icon btn-icon-right" aria-hidden="true">{rightIcon}</span>}
+          {rightIcon && (
+            <span className="btn-icon btn-icon-right" aria-hidden="true">
+              {rightIcon}
+            </span>
+          )}
         </span>
       )}
     </button>
   );
 };
-

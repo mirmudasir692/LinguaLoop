@@ -1,10 +1,5 @@
 import type { NextFunction, Request, Response } from 'express';
-import {
-  getCurrentUser,
-  loginUser,
-  logoutUser,
-  registerUser,
-} from '../services/auth.service';
+import { getCurrentUser, loginUser, logoutUser, registerUser } from '../services/auth.service';
 import type { ApiResponse, AuthenticatedRequest, AuthResponseData } from '../types';
 
 export const register = async (
@@ -13,7 +8,8 @@ export const register = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { name, email, password, age, studyStandard, englishRating, learningGoal, hobbies } = req.body;
+    const { name, email, password, age, studyStandard, englishRating, learningGoal, hobbies } =
+      req.body;
 
     if (!name || !email || !password) {
       res.status(400).json({
@@ -59,11 +55,12 @@ export const register = async (
       message: 'User registered successfully',
       data: authData,
     });
-  } catch (error: any) {
-    if (error.message === 'User already exists with this email') {
+  } catch (error: unknown) {
+    const err = error as Error;
+    if (err.message === 'User already exists with this email') {
       res.status(409).json({
         success: false,
-        message: error.message,
+        message: err.message,
         data: null,
       });
       return;
@@ -96,11 +93,12 @@ export const login = async (
       message: 'Login successful',
       data: authData,
     });
-  } catch (error: any) {
-    if (error.message === 'Invalid email or password') {
+  } catch (error: unknown) {
+    const err = error as Error;
+    if (err.message === 'Invalid email or password') {
       res.status(401).json({
         success: false,
-        message: error.message,
+        message: err.message,
         data: null,
       });
       return;
@@ -152,11 +150,12 @@ export const getProfile = async (
         user,
       },
     });
-  } catch (error: any) {
-    if (error.message === 'User not found') {
+  } catch (error: unknown) {
+    const err = error as Error;
+    if (err.message === 'User not found') {
       res.status(404).json({
         success: false,
-        message: error.message,
+        message: err.message,
         data: null,
       });
       return;

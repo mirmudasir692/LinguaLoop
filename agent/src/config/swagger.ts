@@ -7,7 +7,8 @@ export const swaggerSpec = {
   info: {
     title: 'Maestra Auth API',
     version: '1.0.0',
-    description: 'Complete End-to-End User Authentication API documentation with JWT authentication',
+    description:
+      'Complete End-to-End User Authentication API documentation with JWT authentication',
   },
   servers: [
     {

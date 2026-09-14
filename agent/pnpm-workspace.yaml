@@ -4,7 +4,7 @@ minimumReleaseAgeExclude:
   - mastra
   - "@mastra/*"
 allowBuilds:
-  '@scarf/scarf': set this to true or false
+  '@scarf/scarf': false
   bufferutil: true
   esbuild: true
   msedge-tts: false

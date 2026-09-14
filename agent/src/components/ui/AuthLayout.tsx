@@ -8,10 +8,7 @@ export interface AuthLayoutProps {
   brandName?: string;
 }
 
-export const AuthLayout: React.FC<AuthLayoutProps> = ({
-  children,
-  brandName = 'LinguaLoop',
-}) => {
+export const AuthLayout: React.FC<AuthLayoutProps> = ({ children, brandName = 'LinguaLoop' }) => {
   const location = useLocation();
   const isLogin = location.pathname === '/login';
 
@@ -22,7 +19,14 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({
         <header className="auth-layout-header">
           <div className="auth-brand-logo-container">
             <div className="auth-brand-symbol">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <path d="M12 2L2 7l10 5 10-5-10-5z" />
                 <path d="M2 17l10 5 10-5" />
                 <path d="M2 12l10 5 10-5" />
@@ -51,9 +55,7 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({
         </nav>
 
         {/* Form Container Card */}
-        <main className="auth-layout-content">
-          {children}
-        </main>
+        <main className="auth-layout-content">{children}</main>
       </div>
     </div>
   );

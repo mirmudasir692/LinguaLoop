@@ -14,8 +14,7 @@ export const envSchema = z.object({
     .default('development')
     .describe('Application runtime environment'),
 
-  PORT: z
-    .coerce
+  PORT: z.coerce
     .number()
     .int()
     .min(1, 'PORT must be a positive integer')
@@ -28,10 +27,7 @@ export const envSchema = z.object({
     .min(1, 'MONGODB_URI is required to connect to the MongoDB database')
     .describe('MongoDB connection URL string'),
 
-  MONGODB_DB_NAME: z
-    .string()
-    .default('lingualoop_db')
-    .describe('MongoDB database name'),
+  MONGODB_DB_NAME: z.string().default('lingualoop_db').describe('MongoDB database name'),
 
   REDIS_URL: z
     .string()
@@ -63,10 +59,7 @@ export const envSchema = z.object({
     .optional()
     .describe('Optional Mastra Platform access token'),
 
-  MASTRA_PROJECT_ID: z
-    .string()
-    .optional()
-    .describe('Optional Mastra Platform project ID'),
+  MASTRA_PROJECT_ID: z.string().optional().describe('Optional Mastra Platform project ID'),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;
@@ -82,7 +75,9 @@ export const validateEnv = (): EnvConfig => {
     console.error('====================================================');
     console.error('CRITICAL: ENVIRONMENT VARIABLE VALIDATION FAILED');
     console.error('====================================================');
-    console.error('The application failed to start due to missing or invalid environment variables:\n');
+    console.error(
+      'The application failed to start due to missing or invalid environment variables:\n'
+    );
 
     result.error.issues.forEach((issue) => {
       const field = issue.path.join('.') || 'UNKNOWN_FIELD';

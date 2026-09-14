@@ -12,8 +12,9 @@ export function useConversations() {
     try {
       const data = await chatService.getConversations();
       setConversations(data);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load conversations');
+    } catch (err: unknown) {
+      const errorObj = err as Error;
+      setError(errorObj.message || 'Failed to load conversations');
     } finally {
       setLoading(false);
     }

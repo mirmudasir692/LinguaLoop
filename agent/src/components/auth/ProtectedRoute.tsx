@@ -52,4 +52,3 @@ export const PublicRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
   return <>{children}</>;
 };
-

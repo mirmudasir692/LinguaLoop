@@ -11,7 +11,12 @@ export const getParam = (param: string | string[] | undefined): string | undefin
   return value.trim() || undefined;
 };
 
-export const sendSuccess = <T>(res: Response<ApiResponse<T>>, message: string, data: T, statusCode = 200): void => {
+export const sendSuccess = <T>(
+  res: Response<ApiResponse<T>>,
+  message: string,
+  data: T,
+  statusCode = 200
+): void => {
   res.status(statusCode).json({
     success: true,
     message,

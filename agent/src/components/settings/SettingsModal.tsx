@@ -66,8 +66,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div 
-        className="modal-dialog settings-modal-dialog" 
+      <div
+        className="modal-dialog settings-modal-dialog"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
@@ -76,8 +76,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
         {/* Header */}
         <div className="modal-header">
           <div className="settings-header-info">
-            <h2 id="settings-dialog-title" className="modal-title">Settings & Preferences</h2>
-            <p className="settings-header-subtitle">Manage your account profile, security, and app options</p>
+            <h2 id="settings-dialog-title" className="modal-title">
+              Settings & Preferences
+            </h2>
+            <p className="settings-header-subtitle">
+              Manage your account profile, security, and app options
+            </p>
           </div>
           <button
             type="button"
@@ -96,7 +100,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
             className={`settings-modal-tab-btn ${activeTab === 'profile' ? 'active' : ''}`}
             onClick={() => setActiveTab('profile')}
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="tab-icon">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              className="tab-icon"
+            >
               <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
               <circle cx="12" cy="7" r="4" />
             </svg>
@@ -107,7 +117,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
             className={`settings-modal-tab-btn ${activeTab === 'security' ? 'active' : ''}`}
             onClick={() => setActiveTab('security')}
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="tab-icon">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              className="tab-icon"
+            >
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
               <path d="M7 11V7a5 5 0 0 1 10 0v4" />
             </svg>
@@ -118,7 +134,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
             className={`settings-modal-tab-btn ${activeTab === 'preferences' ? 'active' : ''}`}
             onClick={() => setActiveTab('preferences')}
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="tab-icon">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              className="tab-icon"
+            >
               <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
               <circle cx="12" cy="12" r="3" />
             </svg>
@@ -130,7 +152,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
         {toastMessage && (
           <div className="settings-toast-banner" role="status">
             <svg viewBox="0 0 20 20" fill="currentColor" className="toast-icon">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              <path
+                fillRule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                clipRule="evenodd"
+              />
             </svg>
             <span>{toastMessage}</span>
           </div>
@@ -141,27 +167,44 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
           {/* PROFILE TAB */}
           {activeTab === 'profile' && (
             <div className="settings-section">
-              <div className="profile-identity-banner" style={{ paddingBottom: '16px', marginBottom: '16px' }}>
-                <div className="profile-large-avatar" aria-hidden="true" style={{ width: '56px', height: '56px', fontSize: '20px' }}>
+              <div
+                className="profile-identity-banner"
+                style={{ paddingBottom: '16px', marginBottom: '16px' }}
+              >
+                <div
+                  className="profile-large-avatar"
+                  aria-hidden="true"
+                  style={{ width: '56px', height: '56px', fontSize: '20px' }}
+                >
                   {getInitials(user.name)}
                 </div>
                 <div className="profile-identity-meta">
                   <div className="profile-name-row">
-                    <h3 className="profile-user-fullname" style={{ fontSize: '17px' }}>{user.name}</h3>
+                    <h3 className="profile-user-fullname" style={{ fontSize: '17px' }}>
+                      {user.name}
+                    </h3>
                     <span className="profile-status-badge">
                       <span className="status-indicator-dot" />
                       Active Member
                     </span>
                   </div>
                   <p className="profile-user-email">{user.email}</p>
-                  <p className="profile-joined-text">Member since {formatMemberSince(user.createdAt)}</p>
+                  <p className="profile-joined-text">
+                    Member since {formatMemberSince(user.createdAt)}
+                  </p>
                 </div>
               </div>
 
               <div className="account-details-grid" style={{ gap: '12px' }}>
                 <div className="account-detail-item">
                   <span className="account-detail-label">Full Name</span>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                    }}
+                  >
                     <span className="account-detail-value">{user.name}</span>
                     <button
                       type="button"
@@ -176,12 +219,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 <div className="account-detail-item">
                   <span className="account-detail-label">Account ID</span>
                   <div className="account-id-row">
-                    <span className="account-id-text mono" style={{ fontSize: '11.5px' }}>{user._id}</span>
-                    <button
-                      type="button"
-                      onClick={copyAccountId}
-                      className="account-copy-button"
-                    >
+                    <span className="account-id-text mono" style={{ fontSize: '11.5px' }}>
+                      {user._id}
+                    </span>
+                    <button type="button" onClick={copyAccountId} className="account-copy-button">
                       {copiedId ? 'Copied' : 'Copy'}
                     </button>
                   </div>
@@ -239,9 +280,20 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                   </div>
                   <div className="input-group" style={{ marginTop: '10px' }}>
                     <label className="input-label">New Password</label>
-                    <input type="password" placeholder="Minimum 6 characters" className="input-field" />
+                    <input
+                      type="password"
+                      placeholder="Minimum 6 characters"
+                      className="input-field"
+                    />
                   </div>
-                  <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                  <div
+                    style={{
+                      marginTop: '12px',
+                      display: 'flex',
+                      justifyContent: 'flex-end',
+                      gap: '8px',
+                    }}
+                  >
                     <Button
                       variant="primary"
                       size="sm"
@@ -272,15 +324,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
               <div className="account-settings-row" style={{ borderBottom: 'none' }}>
                 <div>
-                  <p className="setting-title" style={{ color: '#dc2626' }}>Session Sign Out</p>
+                  <p className="setting-title" style={{ color: '#dc2626' }}>
+                    Session Sign Out
+                  </p>
                   <p className="setting-desc">Sign out of your active session on this device.</p>
                 </div>
-                <Button
-                  variant="danger"
-                  size="sm"
-                  onClick={handleLogout}
-                  isLoading={isLoggingOut}
-                >
+                <Button variant="danger" size="sm" onClick={handleLogout} isLoading={isLoggingOut}>
                   Sign Out
                 </Button>
               </div>
@@ -301,7 +350,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
               <div className="account-settings-row">
                 <div>
                   <p className="setting-title">Security Notifications</p>
-                  <p className="setting-desc">Receive security alert emails on unfamiliar sign-ins.</p>
+                  <p className="setting-desc">
+                    Receive security alert emails on unfamiliar sign-ins.
+                  </p>
                 </div>
                 <span className="setting-status-pill">Enabled</span>
               </div>

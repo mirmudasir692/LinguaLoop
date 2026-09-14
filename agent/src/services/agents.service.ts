@@ -70,29 +70,28 @@ export class AgentService {
     requestContext.set('userId', userId);
     requestContext.set('resourceId', userId);
 
-    return agent.stream(
-      [{ role: 'user', content: message }],
-      {
-        memory: {
-          thread: conversationId,
-          resource: userId,
-        },
-        requestContext,
-        maxSteps: 10,
-      }
-    );
+    return agent.stream([{ role: 'user', content: message }], {
+      memory: {
+        thread: conversationId,
+        resource: userId,
+      },
+      requestContext,
+      maxSteps: 10,
+    });
   }
-  
+
   async getSuggestions(): Promise<string[]> {
     const agent = mastra.getAgent('agent');
     if (!agent) throw new Error('Agent not found');
-    
-    const agentWithMetadata = agent as any;
-    
-    return agentWithMetadata.metadata?.suggestedPrompts || [
-      "What can you help me with?",
-      "Tell me about your capabilities."
-    ];
+
+    const agentWithMetadata = agent as unknown as { metadata?: { suggestedPrompts?: string[] } };
+
+    return (
+      agentWithMetadata.metadata?.suggestedPrompts || [
+        'What can you help me with?',
+        'Tell me about your capabilities.',
+      ]
+    );
   }
 }
 

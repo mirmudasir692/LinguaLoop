@@ -65,10 +65,16 @@ async function runTests() {
       body: JSON.stringify({ name: testName, email: testEmail, password: testPassword }),
     });
     const regData = await regRes.json();
-    console.assert(regRes.status === 201, `Register failed with status ${regRes.status}: ${JSON.stringify(regData)}`);
+    console.assert(
+      regRes.status === 201,
+      `Register failed with status ${regRes.status}: ${JSON.stringify(regData)}`
+    );
     console.assert(regData.success === true, 'Register response success should be true');
     console.assert(regData.data.token, 'Register response must return token');
-    console.assert(regData.data.user.email === testEmail.toLowerCase(), 'Register user email mismatch');
+    console.assert(
+      regData.data.user.email === testEmail.toLowerCase(),
+      'Register user email mismatch'
+    );
     console.assert(!regData.data.user.password, 'Password must not be returned');
     authToken = regData.data.token;
     console.log('✓ User registration passed (201)');
@@ -126,7 +132,10 @@ async function runTests() {
     const meInvalidTokenRes = await fetch(`${baseUrl}/me`, {
       headers: { Authorization: 'Bearer invalid_token_xyz' },
     });
-    console.assert(meInvalidTokenRes.status === 401, 'Protected route with invalid token should return 401');
+    console.assert(
+      meInvalidTokenRes.status === 401,
+      'Protected route with invalid token should return 401'
+    );
     console.log('✓ Protected route rejects invalid token (401)');
 
     // 11. Protected route GET /me with valid token

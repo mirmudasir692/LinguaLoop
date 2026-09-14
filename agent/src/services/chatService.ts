@@ -1,7 +1,6 @@
 // services/chatService.ts
 import api from '../utils/api';
-import { getErrorMessage } from './authService';
-import { getToken } from '../utils/storage';   // 👈 your existing token helper
+import { getToken } from '../utils/storage'; // 👈 your existing token helper
 
 export interface ChatMessage {
   id: string;
@@ -18,6 +17,15 @@ export interface ConversationThread {
   updatedAt?: string;
 }
 
+interface RawMessage {
+  id?: string;
+  _id?: string;
+  role?: 'user' | 'assistant' | 'system';
+  content?: string | { content?: string; parts?: { text?: string }[] };
+  createdAt?: string;
+  threadId?: string;
+}
+
 export const chatService = {
   /**
    * Sends a message and streams the response chunks using native fetch (SSE).
@@ -29,7 +37,7 @@ export const chatService = {
     onChunk: (chunk: string) => void,
     onConversationId?: (id: string) => void
   ): Promise<void> {
-    const token = getToken(); 
+    const token = getToken();
     const baseURL = api.defaults.baseURL || '';
     const url = `${baseURL}/api/agent/chat`;
 
@@ -76,16 +84,16 @@ export const chatService = {
 
             try {
               const parsed = JSON.parse(data);
-               if (parsed.conversationId) {
-                  onConversationId?.(parsed.conversationId);
-                  continue; 
-        }
+              if (parsed.conversationId) {
+                onConversationId?.(parsed.conversationId);
+                continue;
+              }
               if (parsed.chunk) {
                 onChunk(parsed.chunk);
               } else if (parsed.error) {
                 throw new Error(parsed.error);
               }
-            } catch (e) {
+            } catch (_e) {
               // ignore incomplete or non‑JSON lines
             }
           }
@@ -100,10 +108,17 @@ export const chatService = {
    */
   async sendMessage(message: string, conversationId?: string): Promise<string> {
     let fullText = '';
-    let newConversationId = conversationId || ''; 
-    await this.sendMessageStream(message, conversationId, (chunk) => {
-      fullText += chunk;
-    }, (id) => { newConversationId = id; });
+    let _newConversationId = conversationId || '';
+    await this.sendMessageStream(
+      message,
+      conversationId,
+      (chunk) => {
+        fullText += chunk;
+      },
+      (id) => {
+        _newConversationId = id;
+      }
+    );
     return fullText || 'I processed your request successfully.';
   },
 
@@ -136,10 +151,10 @@ export const chatService = {
         return [];
       }
 
-      const rawMessages = response.data.data;
+      const rawMessages = response.data.data as RawMessage[];
       if (!Array.isArray(rawMessages)) return [];
 
-      return rawMessages.map((m: any) => {
+      return rawMessages.map((m: RawMessage) => {
         let text = '';
         if (typeof m.content === 'string') {
           text = m.content;

@@ -77,7 +77,7 @@ export const Dashboard: React.FC = () => {
               </svg>
             </div>
             <span className="account-brand-title">LinguaLoop</span>
-            
+
             <nav className="account-nav-links">
               <Link to="/chat" className="account-nav-item">
                 Chat
@@ -111,7 +111,9 @@ export const Dashboard: React.FC = () => {
         <div className="account-page-header">
           <div>
             <h1 className="account-main-title">Account Settings</h1>
-            <p className="account-main-desc">Manage your profile details, security preferences, and active sessions.</p>
+            <p className="account-main-desc">
+              Manage your profile details, security preferences, and active sessions.
+            </p>
           </div>
         </div>
 
@@ -119,7 +121,11 @@ export const Dashboard: React.FC = () => {
         {actionSuccess && (
           <div className="account-toast-banner" role="status">
             <svg viewBox="0 0 20 20" fill="currentColor" className="toast-icon">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              <path
+                fillRule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                clipRule="evenodd"
+              />
             </svg>
             <span>{actionSuccess}</span>
           </div>
@@ -132,7 +138,13 @@ export const Dashboard: React.FC = () => {
             className={`account-subnav-btn ${activeTab === 'profile' ? 'active' : ''}`}
             onClick={() => setActiveTab('profile')}
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="tab-icon">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              className="tab-icon"
+            >
               <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
               <circle cx="12" cy="7" r="4" />
             </svg>
@@ -143,7 +155,13 @@ export const Dashboard: React.FC = () => {
             className={`account-subnav-btn ${activeTab === 'security' ? 'active' : ''}`}
             onClick={() => setActiveTab('security')}
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="tab-icon">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              className="tab-icon"
+            >
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
               <path d="M7 11V7a5 5 0 0 1 10 0v4" />
             </svg>
@@ -154,7 +172,13 @@ export const Dashboard: React.FC = () => {
             className={`account-subnav-btn ${activeTab === 'preferences' ? 'active' : ''}`}
             onClick={() => setActiveTab('preferences')}
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="tab-icon">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              className="tab-icon"
+            >
               <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
               <circle cx="12" cy="12" r="3" />
             </svg>
@@ -170,13 +194,11 @@ export const Dashboard: React.FC = () => {
               <CardHeader className="account-card-header">
                 <div>
                   <CardTitle>Public Profile</CardTitle>
-                  <CardSubtitle>This information is associated with your LinguaLoop account.</CardSubtitle>
+                  <CardSubtitle>
+                    This information is associated with your LinguaLoop account.
+                  </CardSubtitle>
                 </div>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setShowEditModal(true)}
-                >
+                <Button variant="secondary" size="sm" onClick={() => setShowEditModal(true)}>
                   Edit Profile
                 </Button>
               </CardHeader>
@@ -195,7 +217,9 @@ export const Dashboard: React.FC = () => {
                       </span>
                     </div>
                     <p className="profile-user-email">{user.email}</p>
-                    <p className="profile-joined-text">Member since {formatMemberSince(user.createdAt)}</p>
+                    <p className="profile-joined-text">
+                      Member since {formatMemberSince(user.createdAt)}
+                    </p>
                   </div>
                 </div>
 
@@ -211,7 +235,11 @@ export const Dashboard: React.FC = () => {
                       <span className="account-detail-value">{user.email}</span>
                       <span className="verified-badge">
                         <svg viewBox="0 0 20 20" fill="currentColor" className="verified-icon">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          <path
+                            fillRule="evenodd"
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                            clipRule="evenodd"
+                          />
                         </svg>
                         Verified
                       </span>
@@ -253,7 +281,9 @@ export const Dashboard: React.FC = () => {
                 <div className="account-settings-row">
                   <div>
                     <p className="setting-title">Security & Login Alerts</p>
-                    <p className="setting-desc">Receive instant email notifications for new logins and password updates.</p>
+                    <p className="setting-desc">
+                      Receive instant email notifications for new logins and password updates.
+                    </p>
                   </div>
                   <span className="setting-status-pill">Enabled</span>
                 </div>
@@ -271,11 +301,7 @@ export const Dashboard: React.FC = () => {
                   <CardTitle>Password & Authentication</CardTitle>
                   <CardSubtitle>Keep your account secure with a strong password.</CardSubtitle>
                 </div>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setShowPasswordModal(true)}
-                >
+                <Button variant="secondary" size="sm" onClick={() => setShowPasswordModal(true)}>
                   Change Password
                 </Button>
               </CardHeader>
@@ -291,12 +317,16 @@ export const Dashboard: React.FC = () => {
                 <div className="security-item-row">
                   <div>
                     <p className="setting-title">Two-Factor Authentication (2FA)</p>
-                    <p className="setting-desc">Add an extra layer of security using an authenticator app.</p>
+                    <p className="setting-desc">
+                      Add an extra layer of security using an authenticator app.
+                    </p>
                   </div>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => triggerToast('Two-Factor Authentication setup will be enabled shortly.')}
+                    onClick={() =>
+                      triggerToast('Two-Factor Authentication setup will be enabled shortly.')
+                    }
                   >
                     Setup 2FA
                   </Button>
@@ -329,7 +359,9 @@ export const Dashboard: React.FC = () => {
                         Active Now
                       </span>
                     </div>
-                    <p className="session-device-info">Authenticated via secure token • Token expires automatically</p>
+                    <p className="session-device-info">
+                      Authenticated via secure token • Token expires automatically
+                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -346,7 +378,8 @@ export const Dashboard: React.FC = () => {
               <CardContent className="account-card-body">
                 <div className="danger-zone-content">
                   <p className="danger-zone-desc">
-                    Signing out will invalidate your active session token. You will need to log back in to access your workspace.
+                    Signing out will invalidate your active session token. You will need to log back
+                    in to access your workspace.
                   </p>
                   <Button
                     variant="danger"
@@ -376,7 +409,9 @@ export const Dashboard: React.FC = () => {
                 <div className="account-settings-row">
                   <div>
                     <p className="setting-title">Theme Appearance</p>
-                    <p className="setting-desc">Currently set to Dark SaaS Theme (optimized for low-light environments).</p>
+                    <p className="setting-desc">
+                      Currently set to Dark SaaS Theme (optimized for low-light environments).
+                    </p>
                   </div>
                   <span className="setting-status-pill">Dark Mode (Default)</span>
                 </div>
@@ -412,20 +447,11 @@ export const Dashboard: React.FC = () => {
               </div>
               <div className="input-group" style={{ marginTop: '14px' }}>
                 <label className="input-label">Email Address (Read-only)</label>
-                <input
-                  type="email"
-                  value={user.email}
-                  disabled
-                  className="input-field"
-                />
+                <input type="email" value={user.email} disabled className="input-field" />
               </div>
             </div>
             <div className="modal-footer">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowEditModal(false)}
-              >
+              <Button variant="outline" size="sm" onClick={() => setShowEditModal(false)}>
                 Cancel
               </Button>
               <Button
@@ -460,27 +486,15 @@ export const Dashboard: React.FC = () => {
             <div className="modal-body">
               <div className="input-group">
                 <label className="input-label">Current Password</label>
-                <input
-                  type="password"
-                  placeholder="••••••••"
-                  className="input-field"
-                />
+                <input type="password" placeholder="••••••••" className="input-field" />
               </div>
               <div className="input-group" style={{ marginTop: '14px' }}>
                 <label className="input-label">New Password</label>
-                <input
-                  type="password"
-                  placeholder="Minimum 6 characters"
-                  className="input-field"
-                />
+                <input type="password" placeholder="Minimum 6 characters" className="input-field" />
               </div>
             </div>
             <div className="modal-footer">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowPasswordModal(false)}
-              >
+              <Button variant="outline" size="sm" onClick={() => setShowPasswordModal(false)}>
                 Cancel
               </Button>
               <Button
@@ -502,5 +516,3 @@ export const Dashboard: React.FC = () => {
 };
 
 export default Dashboard;
-
-

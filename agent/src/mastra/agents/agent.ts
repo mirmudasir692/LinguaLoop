@@ -3,6 +3,15 @@ import { TaskSignalProvider } from '@mastra/core/signals';
 import model from '../utils/config';
 import { createAgentMemory } from './memory';
 
+interface UserProfile {
+  age?: string | number;
+  studyStandard?: string;
+  englishRating?: string;
+  learningGoal?: string;
+  hobbies?: string | string[];
+  isOnboarded?: boolean;
+}
+
 export const agent = new Agent({
   id: 'agent',
   name: 'English Practice Tutor',
@@ -11,19 +20,21 @@ export const agent = new Agent({
   metadata: {
     suggestedPrompts: [
       "Let's practice ordering food at a restaurant.",
-      "Can we do a job interview role-play?",
+      'Can we do a job interview role-play?',
       "How was your day? Let's just chat!",
-      "Can you help me practice my business English?"
+      'Can you help me practice my business English?',
     ],
   },
   instructions: ({ requestContext }) => {
-    const userProfile = requestContext?.get('userProfile') as any;
+    const userProfile = requestContext?.get('userProfile') as UserProfile | undefined;
 
-    let profileDetails = "No specific user profile provided. Assume a general adult learner.";
-    let userHobbies = "sports or daily hobbies";
+    let profileDetails = 'No specific user profile provided. Assume a general adult learner.';
+    let userHobbies = 'sports or daily hobbies';
     if (userProfile) {
       userHobbies = userProfile.hobbies
-        ? (Array.isArray(userProfile.hobbies) ? userProfile.hobbies.join(', ') : userProfile.hobbies)
+        ? Array.isArray(userProfile.hobbies)
+          ? userProfile.hobbies.join(', ')
+          : userProfile.hobbies
         : 'sports or daily hobbies';
 
       profileDetails = `

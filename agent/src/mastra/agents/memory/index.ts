@@ -1,10 +1,10 @@
 import { Memory } from '@mastra/memory';
-import model from "../../utils/config";
+import model from '../../utils/config';
 import { getMongoStore } from '../storage';
 
 export function createAgentMemory() {
   const store = getMongoStore();
-  
+
   return new Memory({
     storage: store,
     options: {

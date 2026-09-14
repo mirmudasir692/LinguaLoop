@@ -13,7 +13,6 @@ export function getCachedMongoStore() {
       const originalMethod = Reflect.get(target, prop, receiver);
       if (typeof originalMethod !== 'function') return originalMethod;
 
-
       if (prop === 'getThread') {
         return async (threadId: string) => {
           const cacheKey = `mastra:thread:${threadId}`;
@@ -29,7 +28,7 @@ export function getCachedMongoStore() {
       }
 
       if (prop === 'getMessages') {
-        return async (threadId: string, ...args: any[]) => {
+        return async (threadId: string, ...args: unknown[]) => {
           const cacheKey = `mastra:messages:${threadId}`;
           const cached = await redis.get(cacheKey);
           if (cached) return JSON.parse(cached);
@@ -43,7 +42,7 @@ export function getCachedMongoStore() {
       }
 
       if (prop === 'getThreadsByResourceId') {
-        return async (resourceId: string, ...args: any[]) => {
+        return async (resourceId: string, ...args: unknown[]) => {
           const cacheKey = `mastra:threads:resource:${resourceId}`;
           const cached = await redis.get(cacheKey);
           if (cached) return JSON.parse(cached);
@@ -56,22 +55,27 @@ export function getCachedMongoStore() {
         };
       }
 
-
       const writeMethods = [
-        'saveThread', 'updateThread', 'deleteThread',
-        'saveMessages', 'deleteMessages',
-        'getWorkingMemory', 'saveWorkingMemory'
+        'saveThread',
+        'updateThread',
+        'deleteThread',
+        'saveMessages',
+        'deleteMessages',
+        'getWorkingMemory',
+        'saveWorkingMemory',
       ];
 
       if (writeMethods.includes(prop)) {
-        return async (...args: any[]) => {
+        return async (...args: unknown[]) => {
           const result = await originalMethod.apply(target, args);
+          const firstArg = args[0] as Record<string, unknown> | undefined;
 
           let threadId =
-            args[0]?.threadId ||
-            args[0]?.id ||
-            args[0]?.[0]?.threadId ||
-            args[0]?.resourceId;
+            (firstArg?.threadId as string | undefined) ||
+            (firstArg?.id as string | undefined) ||
+            ((firstArg as unknown as Record<string, unknown>[])?.[0]?.threadId as
+              string | undefined) ||
+            (firstArg?.resourceId as string | undefined);
 
           if (threadId) {
             await redis.del(`mastra:thread:${threadId}`);
@@ -79,8 +83,8 @@ export function getCachedMongoStore() {
             await redis.del(`mastra:working_memory:${threadId}`);
           }
 
-          if (args[0]?.resourceId) {
-            await redis.del(`mastra:threads:resource:${args[0].resourceId}`);
+          if (firstArg?.resourceId) {
+            await redis.del(`mastra:threads:resource:${firstArg.resourceId as string}`);
           }
 
           return result;

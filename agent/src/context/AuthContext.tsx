@@ -1,18 +1,6 @@
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import React, { createContext, useCallback, useEffect, useMemo, useState } from 'react';
 import * as authService from '../services/authService';
-import type {
-  AuthContextType,
-  LoginCredentials,
-  RegisterCredentials,
-  User,
-} from '../types/auth';
+import type { AuthContextType, LoginCredentials, RegisterCredentials, User } from '../types/auth';
 import { getToken, removeToken, setToken } from '../utils/storage';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -80,7 +68,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error(response.message || 'Login failed');
       }
     } catch (error) {
-      const message = authService.getErrorMessage(error, 'Login failed. Please check your credentials.');
+      const message = authService.getErrorMessage(
+        error,
+        'Login failed. Please check your credentials.'
+      );
       throw new Error(message);
     }
   }, []);
@@ -120,4 +111,3 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 export { AuthContext };
 export { useAuth } from './useAuth';
-

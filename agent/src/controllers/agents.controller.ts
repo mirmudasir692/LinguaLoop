@@ -1,21 +1,11 @@
 import type { NextFunction, Response } from 'express';
 import { agentService } from '../services/agents.service';
 import type { ApiResponse, AuthenticatedRequest } from '../types';
-import {
-  getAuthUserId,
-  getParam,
-  sendBadRequest,
-  sendSuccess,
-  sendUnauthorized,
-} from '../utils/requestUtils';
+import { getAuthUserId, getParam, sendSuccess, sendUnauthorized } from '../utils/requestUtils';
 import { v4 as uuidv4 } from 'uuid';
 
 export class AgentController {
-chat = async (
-    req: AuthenticatedRequest,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
+  chat = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { message, conversationId } = req.body;
 
@@ -30,19 +20,19 @@ chat = async (
         return;
       }
 
-     let activeConversationId = conversationId?.trim() || uuidv4();
+      let activeConversationId = conversationId?.trim() || uuidv4();
 
       res.setHeader('Content-Type', 'text/event-stream');
       res.setHeader('Cache-Control', 'no-cache');
       res.setHeader('Connection', 'keep-alive');
       res.setHeader('X-Accel-Buffering', 'no');
       const stream = await agentService.chatStream(activeConversationId, userId, message.trim());
-        res.write(`data: ${JSON.stringify({ conversationId: activeConversationId })}\n\n`);
-      
+      res.write(`data: ${JSON.stringify({ conversationId: activeConversationId })}\n\n`);
+
       for await (const chunk of stream.textStream) {
         res.write(`data: ${JSON.stringify({ chunk })}\n\n`);
       }
-      
+
       res.write('data: [DONE]\n\n');
       res.end();
     } catch (error) {

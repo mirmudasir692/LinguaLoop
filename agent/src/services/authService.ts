@@ -9,7 +9,10 @@ import type {
   RegisterCredentials,
 } from '../types/auth';
 
-export const getErrorMessage = (error: unknown, fallbackMessage = 'An unexpected error occurred'): string => {
+export const getErrorMessage = (
+  error: unknown,
+  fallbackMessage = 'An unexpected error occurred'
+): string => {
   if (axios.isAxiosError(error)) {
     const errorData = error.response?.data as ApiResponse<unknown> | undefined;
     if (errorData?.message) {
@@ -43,4 +46,3 @@ export const getProfile = async (): Promise<ProfileResponse> => {
   const response = await api.get<ProfileResponse>('/api/auth/me');
   return response.data;
 };
-

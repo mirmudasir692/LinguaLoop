@@ -1,7 +1,13 @@
 import { useState } from 'react';
 import { Send } from 'lucide-react';
 
-export function ChatInput({ onSend, disabled }: { onSend: (text: string) => void; disabled?: boolean }) {
+export function ChatInput({
+  onSend,
+  disabled,
+}: {
+  onSend: (text: string) => void;
+  disabled?: boolean;
+}) {
   const [input, setInput] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {

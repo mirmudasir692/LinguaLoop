@@ -11,7 +11,7 @@ export function useChat(
   const [loading, setLoading] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Track new conversation ID created during an in-flight send request
   const inFlightNewIdRef = useRef<string | null>(null);
 
@@ -25,8 +25,9 @@ export function useChat(
       }
       const msgs = await chatService.getMessages(id);
       setMessages(msgs);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load messages');
+    } catch (err: unknown) {
+      const errObj = err as Error;
+      setError(errObj.message || 'Failed to load messages');
     } finally {
       setLoading(false);
     }
@@ -75,9 +76,7 @@ export function useChat(
           conversationId,
           (chunk) => {
             setMessages((prev) =>
-              prev.map((m) =>
-                m.id === assistantMsgId ? { ...m, content: m.content + chunk } : m
-              )
+              prev.map((m) => (m.id === assistantMsgId ? { ...m, content: m.content + chunk } : m))
             );
           },
           (newId) => {
@@ -87,8 +86,9 @@ export function useChat(
             }
           }
         );
-      } catch (err: any) {
-        setError(err.message || 'Failed to send message');
+      } catch (err: unknown) {
+        const errObj = err as Error;
+        setError(errObj.message || 'Failed to send message');
         setMessages((prev) =>
           prev.filter((m) => m.id !== tempUserMsg.id && m.id !== assistantMsgId)
         );

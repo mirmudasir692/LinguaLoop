@@ -1,0 +1,3 @@
+cd agent
+echo "Running pre-push build check..."
+pnpm run build

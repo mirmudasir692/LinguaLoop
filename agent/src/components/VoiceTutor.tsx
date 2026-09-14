@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Mic, MicOff, Volume2, VolumeX, AlertCircle, Globe, X, Send, Sparkles } from 'lucide-react';
+import { Mic, MicOff, Volume2, AlertCircle, Globe, X, Send, Sparkles } from 'lucide-react';
 
 // ==========================================
 // Native Web Speech API TypeScript Types
@@ -37,17 +37,17 @@ interface SpeechRecognition extends EventTarget {
   interimResults: boolean;
   lang: string;
   maxAlternatives: number;
-  onaudiostart: ((this: SpeechRecognition, ev: Event) => any) | null;
-  onaudioend: ((this: SpeechRecognition, ev: Event) => any) | null;
-  onend: ((this: SpeechRecognition, ev: Event) => any) | null;
-  onerror: ((this: SpeechRecognition, ev: SpeechRecognitionErrorEvent) => any) | null;
-  onnomatch: ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => any) | null;
-  onresult: ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => any) | null;
-  onsoundstart: ((this: SpeechRecognition, ev: Event) => any) | null;
-  onsoundend: ((this: SpeechRecognition, ev: Event) => any) | null;
-  onspeechstart: ((this: SpeechRecognition, ev: Event) => any) | null;
-  onspeechend: ((this: SpeechRecognition, ev: Event) => any) | null;
-  onstart: ((this: SpeechRecognition, ev: Event) => any) | null;
+  onaudiostart: ((this: SpeechRecognition, ev: Event) => void) | null;
+  onaudioend: ((this: SpeechRecognition, ev: Event) => void) | null;
+  onend: ((this: SpeechRecognition, ev: Event) => void) | null;
+  onerror: ((this: SpeechRecognition, ev: SpeechRecognitionErrorEvent) => void) | null;
+  onnomatch: ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => void) | null;
+  onresult: ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => void) | null;
+  onsoundstart: ((this: SpeechRecognition, ev: Event) => void) | null;
+  onsoundend: ((this: SpeechRecognition, ev: Event) => void) | null;
+  onspeechstart: ((this: SpeechRecognition, ev: Event) => void) | null;
+  onspeechend: ((this: SpeechRecognition, ev: Event) => void) | null;
+  onstart: ((this: SpeechRecognition, ev: Event) => void) | null;
   abort(): void;
   start(): void;
   stop(): void;
@@ -141,57 +141,61 @@ export function VoiceTutor({
   }, [isAiSpeaking]);
 
   // Native TTS function using window.speechSynthesis
-  const speakText = useCallback((text: string) => {
-    if (!('speechSynthesis' in window) || !text.trim()) return;
+  const speakText = useCallback(
+    (text: string) => {
+      if (!('speechSynthesis' in window) || !text.trim()) return;
 
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = selectedLanguage;
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = selectedLanguage;
 
-    // Pause recognition when TTS begins speaking
-    utterance.onstart = () => {
-      isTtsSpeakingRef.current = true;
-      setIsTtsSpeaking(true);
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.abort();
-        } catch (err) {
-          console.warn('Failed to pause recognition for TTS:', err);
+      // Pause recognition when TTS begins speaking
+      utterance.onstart = () => {
+        isTtsSpeakingRef.current = true;
+        setIsTtsSpeaking(true);
+        if (recognitionRef.current) {
+          try {
+            recognitionRef.current.abort();
+          } catch (err) {
+            console.warn('Failed to pause recognition for TTS:', err);
+          }
         }
-      }
-    };
+      };
 
-    const handleSpeechEnd = () => {
-      isTtsSpeakingRef.current = false;
-      setIsTtsSpeaking(false);
-      // Resume recognition when TTS finishes
-      if (isListeningRef.current && recognitionRef.current) {
-        try {
-          recognitionRef.current.start();
-          setIsListening(true);
-        } catch (err) {
-          console.warn('Failed to resume recognition after TTS:', err);
+      const handleSpeechEnd = () => {
+        isTtsSpeakingRef.current = false;
+        setIsTtsSpeaking(false);
+        // Resume recognition when TTS finishes
+        if (isListeningRef.current && recognitionRef.current) {
+          try {
+            recognitionRef.current.start();
+            setIsListening(true);
+          } catch (err) {
+            console.warn('Failed to resume recognition after TTS:', err);
+          }
         }
-      }
-    };
+      };
 
-    utterance.onend = handleSpeechEnd;
-    utterance.onerror = (err) => {
-      console.warn('Speech synthesis error:', err);
-      handleSpeechEnd();
-    };
+      utterance.onend = handleSpeechEnd;
+      utterance.onerror = (err) => {
+        console.warn('Speech synthesis error:', err);
+        handleSpeechEnd();
+      };
 
-    window.speechSynthesis.speak(utterance);
-  }, [selectedLanguage]);
+      window.speechSynthesis.speak(utterance);
+    },
+    [selectedLanguage]
+  );
 
   // Initialize SpeechRecognition instance using useEffect
   useEffect(() => {
-    const SpeechRecognitionConstructor =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
+    const SpeechRecognitionConstructor = window.SpeechRecognition || window.webkitSpeechRecognition;
 
     if (!SpeechRecognitionConstructor) {
       setIsSupported(false);
-      setError('Web Speech API is not supported in this browser. Please use Chrome, Edge, or Safari.');
+      setError(
+        'Web Speech API is not supported in this browser. Please use Chrome, Edge, or Safari.'
+      );
       return;
     }
 
@@ -278,7 +282,7 @@ export function VoiceTutor({
       isListeningRef.current = false;
       try {
         recognition.abort();
-      } catch (err) {}
+      } catch (_err) {}
       recognitionRef.current = null;
     };
   }, [selectedLanguage, onTranscriptChange]);
@@ -301,8 +305,9 @@ export function VoiceTutor({
       try {
         recognitionRef.current.start();
         setIsListening(true);
-      } catch (err: any) {
-        if (err?.name === 'InvalidStateError') {
+      } catch (err: unknown) {
+        const errObj = err as Error;
+        if (errObj?.name === 'InvalidStateError') {
           setIsListening(true);
         } else {
           console.error('Failed to start recognition:', err);
@@ -349,17 +354,11 @@ export function VoiceTutor({
                 isTtsSpeaking
                   ? 'bg-amber-400 animate-bounce'
                   : isListening
-                  ? 'bg-emerald-400 animate-pulse'
-                  : 'bg-gray-400'
+                    ? 'bg-emerald-400 animate-pulse'
+                    : 'bg-gray-400'
               }`}
             />
-            <span>
-              {isTtsSpeaking
-                ? 'Tutor Speaking'
-                : isListening
-                ? 'Listening...'
-                : 'Ready'}
-            </span>
+            <span>{isTtsSpeaking ? 'Tutor Speaking' : isListening ? 'Listening...' : 'Ready'}</span>
           </div>
 
           {onClose && (
@@ -535,7 +534,9 @@ export function VoiceTutor({
 
           {/* Quick Demo TTS Test Button */}
           <button
-            onClick={() => speakText("Hello! I am your AI language tutor. How can I help you practice today?")}
+            onClick={() =>
+              speakText('Hello! I am your AI language tutor. How can I help you practice today?')
+            }
             disabled={isTtsSpeaking}
             title="Test TTS Pronunciation"
             className="p-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition-all active:scale-95 disabled:opacity-40"

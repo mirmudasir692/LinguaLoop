@@ -55,7 +55,10 @@ export const Profile: React.FC = () => {
   return (
     <Card className="account-card">
       <CardHeader className="account-card-header">
-        <div className="profile-identity-banner" style={{ borderBottom: 'none', margin: 0, padding: 0 }}>
+        <div
+          className="profile-identity-banner"
+          style={{ borderBottom: 'none', margin: 0, padding: 0 }}
+        >
           <div className="profile-large-avatar" aria-hidden="true">
             {getInitials(user.name)}
           </div>
@@ -123,5 +126,3 @@ export const Profile: React.FC = () => {
     </Card>
   );
 };
-
-

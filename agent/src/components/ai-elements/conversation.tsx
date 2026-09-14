@@ -1,9 +1,21 @@
 import * as React from 'react';
 
-export function Conversation({ children, className }: { children: React.ReactNode; className?: string }) {
+export function Conversation({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
   return <div className={`flex flex-col ${className}`}>{children}</div>;
 }
-export function ConversationContent({ children, className }: { children: React.ReactNode; className?: string }) {
+export function ConversationContent({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
   return <div className={`flex-1 overflow-y-auto space-y-4 p-4 ${className}`}>{children}</div>;
 }
 export function ConversationScrollButton() {

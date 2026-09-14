@@ -42,7 +42,7 @@ export const verifyToken = async (
     req.user = user;
     req.userId = user._id.toString();
     next();
-  } catch (error: any) {
+  } catch (_error: unknown) {
     res.status(401).json({
       success: false,
       message: 'Invalid or expired token.',

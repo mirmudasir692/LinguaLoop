@@ -89,12 +89,15 @@ export const getUserProfile = async (userId: string): Promise<IUserProfile | nul
   return UserProfile.findOne({ userId });
 };
 
-export const upsertUserProfile = async (userId: string, data: Partial<IUserProfile>): Promise<IUserProfile> => {
+export const upsertUserProfile = async (
+  userId: string,
+  data: Partial<IUserProfile>
+): Promise<IUserProfile> => {
   const existing = await getUserProfile(userId);
   const mergedData = { ...existing?.toObject(), ...data };
 
   const requiredFields = ['age', 'studyStandard', 'englishRating', 'learningGoal', 'hobbies'];
-  const isComplete = requiredFields.every(field => mergedData[field]);
+  const isComplete = requiredFields.every((field) => mergedData[field]);
 
   return UserProfile.findOneAndUpdate(
     { userId },

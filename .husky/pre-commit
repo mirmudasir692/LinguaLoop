@@ -1,0 +1,5 @@
+cd agent
+echo "Running pre-commit checks..."
+pnpm run type-check
+pnpm run lint
+pnpm run format:check

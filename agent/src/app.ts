@@ -33,15 +33,17 @@ export const createApp = (): Express => {
     });
   });
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    console.error('Unhandled Error:', err);
-    const statusCode = err.statusCode || (res.statusCode !== 200 ? res.statusCode : 500);
-    res.status(statusCode).json({
-      success: false,
-      message: err.message || 'Internal Server Error',
-      data: null,
-    });
-  });
+  app.use(
+    (err: Error & { statusCode?: number }, _req: Request, res: Response, _next: NextFunction) => {
+      console.error('Unhandled Error:', err);
+      const statusCode = err.statusCode || (res.statusCode !== 200 ? res.statusCode : 500);
+      res.status(statusCode).json({
+        success: false,
+        message: err.message || 'Internal Server Error',
+        data: null,
+      });
+    }
+  );
 
   return app;
 };
