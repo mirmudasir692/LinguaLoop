@@ -1,4 +1,5 @@
 import Redis from 'ioredis';
+import env from '../config/env.config';
 
 export type VoiceSessionStatus = 'connected' | 'streaming' | 'interrupted' | 'closed';
 
@@ -19,7 +20,7 @@ export class RedisService {
     private isConnected: boolean = false;
 
     constructor() {
-        const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+        const redisUrl = env.REDIS_URL;
         this.client = new Redis(redisUrl, {
             lazyConnect: false,
             retryStrategy(times) {

@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import type { JwtPayloadData } from '../types';
+import env from '../config/env.config';
 
 export const hashPassword = async (password: string): Promise<string> => {
   const salt = await bcrypt.genSalt(10);
@@ -12,12 +13,10 @@ export const comparePassword = async (password: string, hashedPassword: string):
 };
 
 export const generateToken = (userId: string): string => {
-  const secret = process.env.JWT_SECRET || 'fallback_secret_key_change_in_production';
-  const expiresIn = process.env.JWT_EXPIRES_IN || '24h';
-  return jwt.sign({ id: userId }, secret, { expiresIn: expiresIn as any });
+  return jwt.sign({ id: userId }, env.JWT_SECRET, { expiresIn: env.JWT_EXPIRES_IN as any });
 };
 
 export const verifyJwtToken = (token: string): JwtPayloadData => {
-  const secret = process.env.JWT_SECRET || 'fallback_secret_key_change_in_production';
-  return jwt.verify(token, secret) as JwtPayloadData;
+  return jwt.verify(token, env.JWT_SECRET) as JwtPayloadData;
 };
+
